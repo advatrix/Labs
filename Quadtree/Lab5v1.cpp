@@ -1,33 +1,9 @@
-﻿
-
-//двусвязные списки, границы диапазонов ключей типа float
-#include "pch.h"
+﻿#include "pch.h"
 #include <stdio.h>
 #include <malloc.h>
 #include <stdlib.h>
 #include <string.h>
 #pragma warning(disable:4996)
-
-/*
-TO DO:::
-2. Переделать функции load и create, они должны работать так:
-	сначала вводим параметры дерева
-	потом пытаемся загрузить файл (это надо делать после создания дерева, потому что иначе мы не сможем вставить прочитанные элементы)
-	если загрузить файл не удалось, создаем его
-
-	пусть dload, считав необходимые данные, передает управление функции createTree, которая уже внутри себя попытается загрузить файл
-	ну или создать его по необходимости
-
-3. Сохранение в файл
-4. Требования со звездочкой
-5. Визуализация всех типов
-
-
-
-
-
-
-*/
 
 struct elem {
 	int x;
@@ -58,17 +34,6 @@ struct QTree {
 	FILE* fd;
 	char* filename;
 };
-/*
-структура файла
-
-n - число элементов в таблице
-элементы:
-	ключ х
-	ключ у
-	длина информации
-	информация
-
-*/
 
 const char *msgs[] = { "0. Quit", "1. Add new element", "2. Find an element", "3. Delete an element", "4. Show table", "5. Save table", "6. Table properties"};
 const char *errmsgs[] = { "Ok", "Error: Duplicate key 1", "Error: Duplicate key 2", "Error: Table overflow", "Table nullpointer", "Data nullptr" };
@@ -88,8 +53,6 @@ int dsearch(QTree* t);
 int dremove(QTree* t);
 int dshow(QTree* t);
 int properties(QTree *t);
-//int dgarbageCollector(QTree* t);//а нужна ли тут вообще сборка мусора?
-//int garbageCollector(QTree* t);
 int save(QTree* t);
 int rmv(QTree* t, int x, int y);
 int insert(QTree* t, elem* e);
@@ -112,6 +75,9 @@ int showTree(QTree* t);
 int treeView(Node* r, int lvl);
 int delNode(Node* r, int i);
 
+int(*sfptr[])(QTree*) = { NULL, showXDirectOrder, showRange, showTree };
+int(*fptr[])(QTree*) = { NULL, dinsert, dsearch, dremove, dshow, dsave, properties};
+
 int delNode(Node* r, int i) {
 	itemList* tmp = r->itemshead.next;
 	while (tmp) {
@@ -125,6 +91,7 @@ int delNode(Node* r, int i) {
 	if (i == 4) free(r);
 	return 0;
 }
+
 int treeView(Node* r, int lvl) {
 	printf("\n");
 	for (int i = 0; i < lvl; i++) printf("\t");
@@ -219,9 +186,6 @@ int showTree(QTree* t) {
 	treeView(r, 0);
 	return 1;
 }
-
-int(*sfptr[])(QTree*) = { NULL, showXDirectOrder, showRange, showTree };
-int(*fptr[])(QTree*) = { NULL, dinsert, dsearch, dremove, dshow, dsave, properties};
 
 int dshow(QTree* t) {
 	if (!t) return 1;
@@ -345,20 +309,6 @@ int linsert(elem* item, itemList* head) {
 }
 
 int quadrant(int x, int y, float xmin, float xmax, float ymin, float ymax) {
-	/*функция определяет, в каком квадранте ограниченной плоскости лежит точка с координатами х и у
-	Возвращаемые значения
-	0 -  квадрант
-	1 - II квадрант
-	2 - III квадрант
-	3 - IV квадрант
-	-1 - точка лежит за пределами региона
-
-
-	Примечания:
-	точка в самом центре, а также на верхней и правой осях принадлежит I квадранту
-	точка на нижней оси принадлежит II квадранту
-	точка на левой оси принадлежит IV квадранту
-	*/
 	if (x < xmin || x > xmax || y < ymin || y > ymax) return -1;
 	if (x >= (xmax + xmin) / 2) {
 		if (y >= (ymax+ymin) / 2) return 0;
@@ -466,42 +416,6 @@ int divide(Node* parent) {
 	return 0;
 }
 
-int create(QTree* t, char* fname, int xmin, int xmax, int ymin, int ymax, int N) {
-	if (!t) return 1;
-	if (!fname) return 2;
-	if (N <= 1) return 3;
-	if (xmin > xmax) {
-		printf("Minimal X is greater than maximal one, it\'s interesting... They\'ll be swapped\n");
-		int tmp = xmin;
-		xmin = xmax;
-		xmax = tmp;
-	}
-	if (xmin == xmax || ymin == ymax) {
-		//а должна ли тут вылетать ошибка? Наверное, не обязательно...
-	}
-	if (ymin > ymax) {
-		printf("Minimal Y is greater than maximal one, it\'s interesting... They\'ll be swapped\n");
-		int tmp = ymin;
-		ymin = ymax;
-		ymax = tmp;
-	}
-	Node* root = (Node*)malloc(1 * sizeof(Node));
-	t->root = root;
-	t->N = N;
-	t->n = 0;
-	t->filename = fname;
-	t->root->xmax = xmax;
-	t->root->xmin = xmin;
-	t->root->ymin = ymin;
-	t->root->ymax = ymax;
-	t->root->busy = 0;
-	t->root->itemshead.data = NULL;
-	t->root->itemshead.next = NULL;
-	t->root->itemshead.prev = NULL;
-	if (!(fopen_s(&(t->fd), fname, "w+b"))) t->root = NULL;
-	return 0;
-}
-
 int createFile(QTree*t, char* fname) {
 	if (!t) return 1;
 	if (!fname) return 2;
@@ -589,9 +503,7 @@ int createTree(QTree* t, char* fname, int xmin, int xmax, int ymin, int ymax, in
 	t->root->itemshead.prev = NULL;
 	t->root->child = NULL;
 	if (load(t, fname)) createFile(t, fname);
-	/*if (!(fopen_s(&(t->fd), fname, "w+b"))) {
-		t->root = NULL;
-	}*/
+	//if (!(fopen_s(&(t->fd), fname, "w+b"))) t->root = NULL;
 	return 0;
 }
 
