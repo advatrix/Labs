@@ -3,6 +3,7 @@
 #include <malloc.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #pragma warning(disable:4996)
 
 struct elem {
@@ -35,7 +36,7 @@ struct QTree {
 	char* filename;
 };
 
-const char *msgs[] = { "0. Quit", "1. Add new element", "2. Find an element", "3. Delete an element", "4. Show table", "5. Save table", "6. Table properties"};
+const char *msgs[] = { "0. Quit", "1. Add new element", "2. Find an element", "3. Delete an element", "4. Show table", "5. Save table", "6. Table properties", "7. Timing"};
 const char *errmsgs[] = { "Ok", "Error: Duplicate key 1", "Error: Duplicate key 2", "Error: Table overflow", "Table nullpointer", "Data nullptr" };
 const int NMsgs = sizeof(msgs) / sizeof(msgs[0]);
 const char *errmsgsdel[] = { "Ok", "Error: item not found" , "Table nullpointer", "Wrong keyspace" };
@@ -74,9 +75,45 @@ int inRange(itemList*, int xmin, int xmax, int ymin, int ymax);
 int showTree(QTree* t);
 int treeView(Node* r, int lvl);
 int delNode(Node* r, int i);
+int timing(QTree* t);
 
 int(*sfptr[])(QTree*) = { NULL, showXDirectOrder, showRange, showTree };
-int(*fptr[])(QTree*) = { NULL, dinsert, dsearch, dremove, dshow, dsave, properties};
+int(*fptr[])(QTree*) = { NULL, dinsert, dsearch, dremove, dshow, dsave, properties, timing};
+
+int timing(QTree* t) {
+	QTree testTree = { 0, NULL, NULL };
+	createTree(&testTree, NULL, INT_MIN, INT_MAX, INT_MIN, INT_MAX, 10);
+	clock_t first, last;
+	int n = 10, x[100000], y[100000], cnt = 400000, i, m;
+	srand(time(NULL));
+	while (n-- > 0) {
+		for (i = 0; i < 100000; ++i) {
+			x[i] = i;
+			y[i] = i;
+		}
+		for (i = 0; i < cnt; ) {
+			elem* te = (elem*)malloc(sizeof(elem));
+			char* info = makeStr("text");
+			te->x = rand();
+			te->y = rand();
+			te->info = info;
+			if (!insert(&testTree, te)) ++i;
+		}
+		m = 0;
+		first = clock();
+		for (i = 0; i < 100000; i++) {
+			itemList* ans;
+			Node*r = testTree.root;
+			search(&testTree, &r, &ans, x[i], y[i]);
+			if (ans) m++;
+		}
+		last = clock();
+		printf("%d items were found\n", m);
+		printf("test #%d, number of nodes = %d, time = %d\n", 10 - n, (10 - n)*cnt, last - first);
+	}
+	delTree(&testTree);
+	return 1;
+}
 
 int delNode(Node* r, int i) {
 	itemList* tmp = r->itemshead.next;
@@ -87,8 +124,8 @@ int delNode(Node* r, int i) {
 		free(tmp);
 		tmp = next;
 	}
-	if (r->child) for (int i = 0; i < 4; i++) delNode(&(r->child[i]), i);
-	if (i == 4) free(r);
+	if (r->child) for (int i = 3; i >= 0; i--) delNode(&(r->child[i]), i);
+	if (!i) free(r);
 	return 0;
 }
 
@@ -278,8 +315,8 @@ int save(QTree* t) {
 
 int delTree(QTree* t) {
 	Node* r = t->root;
-	delNode(r, 4);
-	free(t->filename);
+	delNode(r, 0);
+	if (t->filename) free(t->filename);
 	return 0;
 }
 
@@ -338,13 +375,18 @@ int insert(QTree* t, elem* e) {
 	if (!t) return 1;
 	if (!e) return 2;
 	if (e->x > t->root->xmax || e->x < t->root->xmin || e->y > t->root->ymax || e->y < t->root->ymin) {
+		free(e->info);
 		free(e);
 		return 4;
 	}
 	Node *r = t->root;
 	itemList* ans = NULL;
 	search(t, &r, &ans, e->x, e->y);
-	if (ans) return 3;
+	if (ans) {
+		free(e->info);
+		free(e);
+		return 3;
+	}
 	while (r->busy == t->N) {
 		divide(r);
 		int q = quadrant(e->x, e->y, r->xmin, r->xmax, r->ymin, r->ymax);
@@ -474,7 +516,7 @@ int dload(QTree *t) {
 
 int createTree(QTree* t, char* fname, int xmin, int xmax, int ymin, int ymax, int N) {
 	if (!t) return 1;
-	if (!fname) return 2;
+	//if (!fname) return 2;
 	if (N < 1) return 3;
 	if (xmin > xmax) {
 		printf("Minimal X is greater than maximal one, it\'s interesting... They\'ll be swapped\n");
@@ -502,7 +544,7 @@ int createTree(QTree* t, char* fname, int xmin, int xmax, int ymin, int ymax, in
 	t->root->itemshead.next = NULL;
 	t->root->itemshead.prev = NULL;
 	t->root->child = NULL;
-	if (load(t, fname)) createFile(t, fname);
+	if (fname) if (load(t, fname)) createFile(t, fname);
 	//if (!(fopen_s(&(t->fd), fname, "w+b"))) t->root = NULL;
 	return 0;
 }
