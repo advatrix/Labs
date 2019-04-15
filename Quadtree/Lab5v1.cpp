@@ -76,11 +76,23 @@ int showTree(QTree* t);
 int treeView(Node* r, int lvl);
 int delNode(Node* r, int i);
 int timing(QTree* t);
+int sort(itemList*** a, int n);
 
 int(*sfptr[])(QTree*) = { NULL, showXDirectOrder, showRange, showTree };
 int(*fptr[])(QTree*) = { NULL, dinsert, dsearch, dremove, dshow, dsave, properties, timing};
 
+int sort(itemList*** a, int n) {
+	itemList* tmp;
+	for (int i = 0; i < n - 1; i++) for (int j = 0; j < n - i - 1; j++) if ((*a)[j]->data->x > (*a)[j + 1]->data->x) {
+		tmp = (*a)[j];
+		(*a)[j] = (*a)[j + 1];
+		(*a)[j + 1] = tmp;
+	}
+	return 0;
+}
+
 int timing(QTree* t) {
+	if (!t) return 2;
 	QTree testTree = { 0, NULL, NULL };
 	createTree(&testTree, NULL, INT_MIN, INT_MAX, INT_MIN, INT_MAX, 10);
 	clock_t first, last;
@@ -116,6 +128,7 @@ int timing(QTree* t) {
 }
 
 int delNode(Node* r, int i) {
+	if (!r) return 1;
 	itemList* tmp = r->itemshead.next;
 	while (tmp) {
 		free(tmp->data->info);
@@ -130,6 +143,7 @@ int delNode(Node* r, int i) {
 }
 
 int treeView(Node* r, int lvl) {
+	if (!r) return 1;
 	printf("\n");
 	for (int i = 0; i < lvl; i++) printf("\t");
 	printf("lvl%d [(%.0f; %.0f) - (%.0f; %.0f)] Busy %d\n", lvl, r->xmin, r->ymin, r->xmax, r->ymax, r->busy);
@@ -149,12 +163,14 @@ int treeView(Node* r, int lvl) {
 }
 
 int inRange(itemList* item, int xmin, int xmax, int ymin, int ymax) {
+	if (!item) return 1;
 	int x = item->data->x, y = item->data->y;
 	if (x >= xmin && x <= xmax && y <= ymax && y >= ymin) return 1;
 	else return 0;
 }
 
 int showRange(QTree* t) {
+	if (!t) return 2;
 	int xmin, xmax, ymin, ymax;
 	printf("Enter key range:\n");
 	printf("Min x: -->");
@@ -187,6 +203,9 @@ int properties(QTree* t) {
 }
 
 itemList*** traverse(Node* node, itemList*** arrptr, int* n) {
+	if (!node) return NULL;
+	if (!arrptr) return NULL;
+	if (!n) return NULL;
 	if (node->child == NULL) {
 		itemList* tmp = node->itemshead.next;
 		while (tmp) {
@@ -205,6 +224,7 @@ itemList*** traverse(Node* node, itemList*** arrptr, int* n) {
 }
 
 int showXDirectOrder(QTree* t) {
+	if (!t) return 2;
 	itemList** arrptr = (itemList**)malloc(t->n * sizeof(itemList*));
 	int n = 0;
 	traverse(t->root, &arrptr, &n);
@@ -212,6 +232,7 @@ int showXDirectOrder(QTree* t) {
 		printf("Table is empty\n");
 		return 1;
 	}
+	sort(&arrptr, n - 1);
 	printf("X\tY\tInfo\n");
 	for (int i = 0; i < n; i++) printf("%d\t%d\t%s\n", arrptr[i]->data->x, arrptr[i]->data->y, arrptr[i]->data->info);
 	free(arrptr);
@@ -219,6 +240,7 @@ int showXDirectOrder(QTree* t) {
 }
 
 int showTree(QTree* t) {
+	if (!t) return 2;
 	Node* r = t->root;
 	treeView(r, 0);
 	return 1;
@@ -261,6 +283,7 @@ int dsearch(QTree* t) {
 }
 
 int rmv(QTree*t, int x, int y) {
+	if (!t) return 2;
 	Node*r = t->root;
 	itemList* ans = NULL;
 	search(t, &r, &ans, x, y);
@@ -277,6 +300,7 @@ int rmv(QTree*t, int x, int y) {
 }
 
 int dremove(QTree* t) {
+	if (!t) return 2;
 	int x, y;
 	printf("Enter x -->");
 	getInt(&x, -1);
@@ -295,6 +319,7 @@ int dsave(QTree*t) {
 }
 
 int save(QTree* t) {
+	if (!t) return 2;
 	if (!t->fd) return 1;
 	fseek(t->fd, 0, SEEK_SET);
 	fwrite(&t->n, sizeof(int), 1, t->fd);
@@ -314,6 +339,7 @@ int save(QTree* t) {
 }
 
 int delTree(QTree* t) {
+	if (!t) return 1;
 	Node* r = t->root;
 	delNode(r, 0);
 	if (t->filename) free(t->filename);
@@ -321,6 +347,8 @@ int delTree(QTree* t) {
 }
 
 int linsert(elem* item, itemList* head) {
+	if (!item) return 2;
+	if (!head) return 3;
 	itemList *tmp = head;
 	itemList* newl = (itemList*)calloc(1, sizeof(itemList));
 	newl->data = item;
@@ -358,6 +386,8 @@ int quadrant(int x, int y, float xmin, float xmax, float ymin, float ymax) {
 }
 
 int search(QTree* t, Node** node, itemList** answer, int x, int y) {
+	if (!t) return 2;
+	if (!node) return 3;
 	while ((*node)->child) {
 		int q = quadrant(x, y, (*node)->xmin, (*node)->xmax, (*node)->ymin, (*node)->ymax);
 		if (q == -1) return 1;
@@ -492,12 +522,13 @@ int load(QTree *t, char *fname) {
 
 
 int dload(QTree *t) {
+	if (!t) return 2;
 	int rc = 1, xmin, xmax, ymin, ymax, N;
 	char* fname = NULL;
 	while(rc) {
 		printf("Enter file name: --> ");
 		fname = getStr(0);
-		if (!fname) return 0;
+		if (!fname) return 1;
 		printf("Enter key range:\n");
 		printf("Min x: -->");
 		getInt(&xmin, -1);
@@ -512,6 +543,7 @@ int dload(QTree *t) {
 		rc = createTree(t, fname, xmin, xmax, ymin, ymax, N);
 		printf("%s\n", errload[rc]);
 	}
+	return 0;
 }
 
 int createTree(QTree* t, char* fname, int xmin, int xmax, int ymin, int ymax, int N) {
@@ -619,15 +651,15 @@ char *getStr(int mode = 1) {
 	} while (n > 0);
 	return ptr;
 }
-
+/*
 int main() {
 	QTree t = { 0, NULL, NULL };
 	int rc;
-	if (!dload(&t)) return 1;
+	if (dload(&t)) return 1;
 	while (rc = dialog(msgs, NMsgs)) if (!fptr[rc](&t)) break;
 	dsave(&t);
 	puts("Program finished");
 	fclose(t.fd);
 	delTree(&t);
 	return 0;
-}
+}*/
