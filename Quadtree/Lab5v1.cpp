@@ -38,13 +38,14 @@ struct QTree {
 
 const char *msgs[] = { "0. Quit", "1. Add new element", "2. Find an element", "3. Delete an element", "4. Show table", "5. Save table", "6. Table properties", "7. Timing"};
 const char *errmsgs[] = { "Ok", "Error: Duplicate key 1", "Error: Duplicate key 2", "Error: Table overflow", "Table nullpointer", "Data nullptr" };
-const int NMsgs = sizeof(msgs) / sizeof(msgs[0]);
 const char *errmsgsdel[] = { "Ok", "Error: item not found" , "Table nullpointer", "Wrong keyspace" };
 const char *errload[] = { "Ok", "Tree nullptr", "Filename nullptr", "N is negative" };
 const char *errsave[] = { "Ok", "Nullptr file descriptor" };
 const char *errins[] = { "Ok", "Tree nullptr", "Element nullptr", "Error: this point already exists", "Incorrect keys: the point doesn\'t fit into the tree" };
 const char *errdel[] = {"Ok", ""};
 const char *showmsgs[] = { "1. X direct order", "2. Keys range", "3. Tree view" };
+
+const int NMsgs = sizeof(msgs) / sizeof(msgs[0]);
 
 int dload(QTree* t);
 int dsave(QTree* t);
@@ -651,7 +652,7 @@ char *getStr(int mode = 1) {
 	} while (n > 0);
 	return ptr;
 }
-/*
+
 int main() {
 	QTree t = { 0, NULL, NULL };
 	int rc;
@@ -662,4 +663,4 @@ int main() {
 	fclose(t.fd);
 	delTree(&t);
 	return 0;
-}*/
+}
