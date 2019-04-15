@@ -229,6 +229,77 @@ TEST(EmptyTree, insert) {
 	ASSERT_EQ(t.root->busy, 1);
 	ASSERT_TRUE(t.root->child == NULL);
 	ASSERT_FALSE(t.root->itemshead.next == NULL);
+	save(&t);
+	fclose(t.fd);
+	delTree(&t);
+}
+
+TEST(OneTree, find) {
+	QTree t = { 0, NULL, NULL };
+	char* fname = makeStr("testfile.dat");
+	createTree(&t, fname, -10000, 10000, -10000, 10000, 4);
+	itemList* ans;
+	Node* r = t.root;
+	search(&t, &r, &ans, 12, 7);
+	ASSERT_EQ(ans->data->x, 12);
+	ASSERT_EQ(ans->data->y, 7);
+	ASSERT_STREQ(ans->data->info, "text");
+	fclose(t.fd);
+	delTree(&t);
+}
+
+TEST(OneTree, findAbsentY) {
+	QTree t = { 0, NULL, NULL };
+	char* fname = makeStr("testfile.dat");
+	createTree(&t, fname, -10000, 10000, -10000, 10000, 4);
+	itemList* ans;
+	Node* r = t.root;
+	search(&t, &r, &ans, 12, 8);
+	ASSERT_TRUE(ans == NULL);
+	fclose(t.fd);
+	delTree(&t);
+}
+
+TEST(OneTree, findAbsentX) {
+	QTree t = { 0, NULL, NULL };
+	char* fname = makeStr("testfile.dat");
+	createTree(&t, fname, -10000, 10000, -10000, 10000, 4);
+	itemList* ans;
+	Node* r = t.root;
+	search(&t, &r, &ans, 13, 7);
+	ASSERT_TRUE(ans == NULL);
+	fclose(t.fd);
+	delTree(&t);
+}
+
+
+TEST(OneTree, findAbsent) {
+	QTree t = { 0, NULL, NULL };
+	char* fname = makeStr("testfile.dat");
+	createTree(&t, fname, -10000, 10000, -10000, 10000, 4);
+	itemList* ans;
+	Node* r = t.root;
+	search(&t, &r, &ans, 13, 6);
+	ASSERT_TRUE(ans == NULL);
+	fclose(t.fd);
+	delTree(&t);
+}
+
+TEST(OneTree, insertDuplicate) {
+	QTree t = { 0, NULL, NULL };
+	char* fname = makeStr("testfile.dat");
+	createTree(&t, fname, -10000, 10000, -10000, 10000, 4);
+	elem* e = (elem*)malloc(sizeof(elem));
+	char* info = makeStr("text");
+	e->x = 12;
+	e->y = 7;
+	e->info = info;
+	ASSERT_EQ(insert(&t, e), 3);
+	ASSERT_EQ(t.n, 1);
+	ASSERT_EQ(t.root->busy, 1);
+	ASSERT_TRUE(t.root->child == NULL);
+	ASSERT_FALSE(t.root->itemshead.next == NULL);
+	save(&t);
 	fclose(t.fd);
 	delTree(&t);
 }
@@ -242,11 +313,201 @@ TEST(OneTree, remove) {
 	ASSERT_EQ(t.root->busy, 0);
 	ASSERT_TRUE(t.root->child == NULL);
 	ASSERT_TRUE(t.root->itemshead.data == NULL);
+	save(&t);
+	fclose(t.fd);
+	delTree(&t);
+}
+
+TEST(EmptyTree1, insertOutside) {
+	QTree t = { 0, NULL, NULL };
+	char* fname = makeStr("testfile.dat");
+	createTree(&t, fname, -10000, 10000, -10000, 10000, 4);
+	elem* e = (elem*)malloc(sizeof(elem));
+	char* info = makeStr("text");
+	e->x = 10001;
+	e->y = -10001;
+	e->info = info;
+	ASSERT_EQ(insert(&t, e), 4);
+	ASSERT_EQ(t.n, 0);
+	ASSERT_EQ(t.root->busy, 0);
+	ASSERT_TRUE(t.root->child == NULL);
+	ASSERT_TRUE(t.root->itemshead.next == NULL);
+	save(&t);
+	fclose(t.fd);
+	delTree(&t);
+}
+
+TEST(EmptyTree1, fillN) {
+	QTree t = { 0, NULL, NULL };
+	char* fname = makeStr("testfile.dat");
+	createTree(&t, fname, -10000, 10000, -10000, 10000, 4);
+	for (int i = 0; i < t.N; i++) {
+		elem* e = (elem*)malloc(sizeof(elem));
+		char* info = makeStr("text");
+		e->x = i + 1;
+		e->y = i + 2;
+		e->info = info;
+		ASSERT_EQ(insert(&t, e), 0);
+	}
+	ASSERT_EQ(t.n, 4);
+	ASSERT_EQ(t.root->busy, 4);
+	ASSERT_EQ(t.root->itemshead.next->data->x, 1);
+	ASSERT_EQ(t.root->itemshead.next->data->y, 2);
+	ASSERT_STREQ(t.root->itemshead.next->data->info, "text");
+	ASSERT_EQ(t.root->itemshead.next->next->data->x, 2);
+	ASSERT_TRUE(t.root->itemshead.next->next->next->next->next == NULL);
+	save(&t);
+	fclose(t.fd);
+	delTree(&t);
+}
+
+TEST(FilledNTree, insert) {
+	QTree t = { 0, NULL, NULL };
+	char* fname = makeStr("testfile.dat");
+	createTree(&t, fname, -10000, 10000, -10000, 10000, 4);
+	ASSERT_EQ(t.n, 4);
+	ASSERT_EQ(t.root->busy, 4);
+	ASSERT_EQ(t.root->itemshead.next->data->x, 1);
+	ASSERT_EQ(t.root->itemshead.next->data->y, 2);
+	ASSERT_STREQ(t.root->itemshead.next->data->info, "text");
+	ASSERT_EQ(t.root->itemshead.next->next->data->x, 2);
+	ASSERT_TRUE(t.root->itemshead.next->next->next->next->next == NULL);
+	elem* e = (elem*)malloc(sizeof(elem));
+	char* info = makeStr("text");
+	e->x = -1;
+	e->y = -2;
+	e->info = info;
+	ASSERT_EQ(insert(&t, e), 0);
+	ASSERT_EQ(t.n, 5);
+	ASSERT_EQ(t.root->busy, 0);
+	ASSERT_FALSE(t.root->child == NULL);
+	ASSERT_TRUE(t.root->itemshead.next == NULL);
+	ASSERT_EQ(t.root->child[2].busy, 1);
+	ASSERT_EQ(t.root->child[0].busy, 4);
+	save(&t);
+	fclose(t.fd);
+	delTree(&t);
+}
+
+TEST(BrokenTree, remove) {
+	QTree t = { 0, NULL, NULL };
+	char* fname = makeStr("testfile.dat");
+	createTree(&t, fname, -10000, 10000, -10000, 10000, 4);
+	rmv(&t, -1, -2);
+	ASSERT_EQ(t.n, 4);
+	ASSERT_EQ(t.root->busy, 0);
+	ASSERT_FALSE(t.root->child == NULL);
+	ASSERT_TRUE(t.root->itemshead.next == NULL);
+	ASSERT_EQ(t.root->child[2].busy, 0);
+	ASSERT_EQ(t.root->child[0].busy, 4);
+	save(&t);
+	fclose(t.fd);
+	delTree(&t);
+}
+
+TEST(Tree2, removeLow) {
+	QTree t = { 0, NULL, NULL };
+	char* fname = makeStr("testfile.dat");
+	createTree(&t, fname, -10000, 10000, -10000, 10000, 4);
+	rmv(&t, 1, 2);
+	ASSERT_EQ(t.n, 3);
+	ASSERT_EQ(t.root->busy, 3);
+	ASSERT_TRUE(t.root->child == NULL);
+	ASSERT_FALSE(t.root->itemshead.next == NULL);
+	ASSERT_EQ(t.root->itemshead.next->data->x, 2);
+	save(&t);
+	fclose(t.fd);
+	delTree(&t);
+}
+
+TEST(Tree2, insertLow) {
+	QTree t = { 0, NULL, NULL };
+	char* fname = makeStr("testfile.dat");
+	createTree(&t, fname, -10000, 10000, -10000, 10000, 4);
+	elem* e = (elem*)malloc(sizeof(elem));
+	char* info = makeStr("text");
+	e->x = 1;
+	e->y = 2;
+	e->info = info;
+	ASSERT_EQ(insert(&t, e), 0);
+	ASSERT_EQ(t.n, 4);
+	ASSERT_EQ(t.root->busy, 4);
+	ASSERT_EQ(t.root->itemshead.next->data->x, 1);
+	save(&t);
+	fclose(t.fd);
+	delTree(&t);
+}
+
+TEST(Tree2, removeHigh) {
+	QTree t = { 0, NULL, NULL };
+	char* fname = makeStr("testfile.dat");
+	createTree(&t, fname, -10000, 10000, -10000, 10000, 4);
+	rmv(&t, 4, 5);
+	ASSERT_EQ(t.n, 3);
+	ASSERT_EQ(t.root->busy, 3);
+	ASSERT_TRUE(t.root->child == NULL);
+	ASSERT_FALSE(t.root->itemshead.next == NULL);
+	save(&t);
+	fclose(t.fd);
+	delTree(&t);
+}
+
+TEST(Tree2, insertHigh) {
+	QTree t = { 0, NULL, NULL };
+	char* fname = makeStr("testfile.dat");
+	createTree(&t, fname, -10000, 10000, -10000, 10000, 4);
+	elem* e = (elem*)malloc(sizeof(elem));
+	char* info = makeStr("text");
+	e->x = 4;
+	e->y = 5;
+	e->info = info;
+	ASSERT_EQ(insert(&t, e), 0);
+	ASSERT_EQ(t.n, 4);
+	ASSERT_EQ(t.root->busy, 4);
+	ASSERT_EQ(t.root->itemshead.next->next->next->next->data->x, 4);
+	save(&t);
 	fclose(t.fd);
 	delTree(&t);
 }
 
 
+TEST(Tree2, insertEdge) {
+	QTree t = { 0, NULL, NULL };
+	char* fname = makeStr("testfile.dat");
+	createTree(&t, fname, -10000, 10000, -10000, 10000, 4);
+	elem* e = (elem*)malloc(sizeof(elem));
+	char* info = makeStr("text");
+	e->x = 10000;
+	e->y = 10000;
+	e->info = info;
+	ASSERT_EQ(insert(&t, e), 0);
+	ASSERT_EQ(t.n, 5);
+	ASSERT_EQ(t.root->busy, 0);
+	ASSERT_FALSE(t.root->child == NULL);
+	save(&t);
+	fclose(t.fd);
+	delTree(&t);
+}
+
+TEST(Tree2, load) {
+	QTree t = { 0, NULL, NULL };
+	char* fname = makeStr("testfile.dat");
+	createTree(&t, fname, -10000, 10000, -10000, 10000, 4);
+	ASSERT_EQ(t.n, 5);
+	save(&t);
+	fclose(t.fd);
+	delTree(&t);
+}
+
+TEST(SmallTree, loadBigKeys) {
+	QTree t = { 0, NULL, NULL };
+	char* fname = makeStr("testfile.dat");
+	createTree(&t, fname, -10, 10, -10, 10, 4);
+	ASSERT_EQ(t.n, 4);
+	save(&t);
+	fclose(t.fd);
+	delTree(&t);
+}
 
 int _tmain(int argc, _TCHAR* argv[]) {
 	::testing::InitGoogleTest(&argc, argv);
