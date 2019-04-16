@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <math.h>
 #pragma warning(disable:4996)
 
 struct elem {
@@ -36,7 +37,7 @@ struct QTree {
 	char* filename;
 };
 
-const char *msgs[] = { "0. Quit", "1. Add new element", "2. Find an element", "3. Delete an element", "4. Show table", "5. Save table", "6. Table properties", "7. Timing"};
+const char *msgs[] = { "0. Quit", "1. Add new element", "2. Find an element", "3. Delete an element", "4. Show table", "5. Save table", "6. Table properties", "7. Timing", "8. Find nearest neighbour"};
 const char *errmsgs[] = { "Ok", "Error: Duplicate key 1", "Error: Duplicate key 2", "Error: Table overflow", "Table nullpointer", "Data nullptr" };
 const char *errmsgsdel[] = { "Ok", "Error: item not found" , "Table nullpointer", "Wrong keyspace" };
 const char *errload[] = { "Ok", "Tree nullptr", "Filename nullptr", "N is negative" };
@@ -78,9 +79,123 @@ int treeView(Node* r, int lvl);
 int delNode(Node* r, int i);
 int timing(QTree* t);
 int sort(itemList*** a, int n);
+int rangeTraverse(Node* node, int xmin, int xmax, int ymin, int ymax);
+double sqrdist(itemList* p1, itemList* p2);
+//Node** findClosestQuadrants(Node* r, int x, int y, double* mindist);
+int nearTraverse(Node* node, int xmin, int xmax, int ymin, int ymax, double* mindist, itemList** np, itemList* a);
+itemList* findPoint(Node** nodearr, Node* node, int lvl, int i, int x, int y);
+int dnearest(QTree*t);
+
 
 int(*sfptr[])(QTree*) = { NULL, showXDirectOrder, showRange, showTree };
-int(*fptr[])(QTree*) = { NULL, dinsert, dsearch, dremove, dshow, dsave, properties, timing};
+int(*fptr[])(QTree*) = { NULL, dinsert, dsearch, dremove, dshow, dsave, properties, timing, dnearest};
+
+int searchPath(QTree* t, Node* node, itemList** answer, int x, int y, Node** nodearr, int* lvl) {
+	while ((node)->child) {
+		int q = quadrant(x, y, (node)->xmin, (node)->xmax, (node)->ymin, (node)->ymax);
+		if (q == -1) return 1;
+		nodearr = (Node**)realloc(nodearr, (*lvl+1) * sizeof(Node*));
+		nodearr[*lvl] = &node->child[q];
+		*node = (node)->child[q];
+		*lvl++;
+	}
+	*answer = (node)->itemshead.next;
+	while (*answer) {
+		if ((*answer)->data->x == x && (*answer)->data->y == y) return 0;
+		else *answer = (*answer)->next;
+	}
+}
+
+int nearestNeighbour(QTree* t, int x, int y) {
+	itemList* ans, *p;
+	Node** nodearr = (Node**)malloc(sizeof(Node*));
+	*nodearr = t->root;
+	int lvl = 0;
+	searchPath(t, t->root, &ans, x, y, nodearr, &lvl);
+	p = findPoint(nodearr, nodearr[lvl], lvl, lvl, x, y);
+	double mindist = sqrdist(ans, p);
+	int xmin, xmax, ymin, ymax;
+	if (x < p->data->x) {
+		xmin = (2 * x - p->data->x);
+		xmax = p->data->x;
+	}
+	else {
+		xmin = p->data->x;
+		xmax = (2 * x - p->data->x);
+	}
+	if (y < p->data->y) {
+		ymin = (2 * y - p->data->y);
+		ymax = p->data->y;
+	}
+	else {
+		ymin = p->data->y;
+		ymax = 2 * y - p->data->y;
+	}
+	itemList* np;
+	nearTraverse(t->root, xmin, xmax, ymin, ymax, &mindist, &np, ans);
+	printf("(%d; %d) %s\n", np->data->x, np->data->y, np->data->info);
+	return 0;
+
+}
+
+int nearTraverse(Node* node, int xmin, int xmax, int ymin, int ymax, double* mindist, itemList** np, itemList* a) {
+	if (!node) return 1;
+	if (node->child == NULL) {
+		itemList* tmp = node->itemshead.next;
+		while (tmp) {
+			if (tmp->data->x >= xmin && tmp->data->y <= xmax && tmp->data->y >= ymin && tmp->data->y <= ymax)
+				if (sqrdist(a, tmp) < *mindist) {
+					*mindist = sqrdist(a, tmp);
+					*np = tmp;
+				}
+			tmp = tmp->next;
+		}
+		return 0;
+	}
+	else {
+		int qmin = quadrant(xmin, ymin, node->xmin, node->xmax, node->ymin, node->ymax);
+		int qmax = quadrant(xmax, ymax, node->xmin, node->xmax, node->ymin, node->ymax);
+		if (qmin == qmax) nearTraverse(&node->child[qmin], xmin, xmax, ymin, ymax, mindist, np, a);
+		else if (abs(qmin - qmax) == 2) {
+			for (int i = 0; i < 4; i++) nearTraverse(&node->child[i], xmin, xmax, ymin, ymax, mindist, np, a);
+		}
+		else {
+			nearTraverse(&node->child[qmin], xmin, xmax, ymin, ymax, mindist, np, a);
+			nearTraverse(&node->child[qmax], xmin, xmax, ymin, ymax, mindist, np, a);
+		}
+	}
+	return 0;
+}
+
+itemList* findPoint(Node** nodearr, Node* node, int lvl, int i, int x, int y) {
+	if (node->itemshead.next) {
+		if (node->itemshead.next->data->x != x || node->itemshead.next->data->y != y)
+			return node->itemshead.next;
+		else if (node->itemshead.next->next) return node->itemshead.next->next;
+	}
+	if (findPoint(nodearr, &node->child[0], lvl, i, x, y)) return findPoint(nodearr, &node->child[0], lvl, i,x, y);
+	if (findPoint(nodearr, &node->child[1], lvl,i, x, y)) return findPoint(nodearr, &node->child[1], lvl,i, x, y);
+	if (findPoint(nodearr, &node->child[2], lvl,i, x, y)) return findPoint(nodearr, &node->child[2], lvl,i, x, y);
+	if (findPoint(nodearr, &node->child[3], lvl, i,x, y)) return findPoint(nodearr, &node->child[3], lvl,i, x, y);
+	findPoint(nodearr, nodearr[i - 1], lvl, i - 1, x, y);
+}
+
+
+double sqrdist(itemList* p1, itemList* p2) {
+	return ((pow(p1->data->x - p2->data->x, 2) + pow(p1->data->y - p2->data->y, 2)));
+}
+
+int dnearest(QTree*t) {
+	if (!t) return 1;
+	int x, y;
+	printf("Enter x:-->");
+	getInt(&x, -1);
+	printf("Enter y:-->");
+	getInt(&y, -1);
+	nearestNeighbour(t, x, y);
+	return 0;
+}
+
 
 int sort(itemList*** a, int n) {
 	itemList* tmp;
@@ -193,6 +308,53 @@ int showRange(QTree* t) {
 		if (inRange(arrptr[i], xmin, xmax, ymin, ymax)) 
 			printf("%d\t%d\t%s\n", arrptr[i]->data->x, arrptr[i]->data->y, arrptr[i]->data->info);
 	return 1;
+}
+
+int showXRange(QTree* t) {
+	if (!t) return 2;
+	int xmin, xmax, ymin, ymax;
+	printf("Enter key range:\n");
+	printf("Min x: -->");
+	getInt(&xmin, -1);
+	printf("Max x: -->");
+	getInt(&xmax, -1);
+	printf("Min y: -->");
+	getInt(&ymin, -1);
+	printf("Max y: -->");
+	getInt(&ymax, -1);
+	if (xmin > t->root->xmax || xmax < t->root->xmin || ymin > t->root->ymax || ymax < t->root->xmin) {
+		printf("This area doesn\'t belong to the tree\n");
+		return 1;
+	}
+	Node* tmp = t->root;
+	rangeTraverse(tmp, xmin, xmax, ymin, ymax);
+	return 0;
+}
+
+int rangeTraverse(Node* node, int xmin, int xmax, int ymin, int ymax) {
+	if (!node) return 1;
+	if (node->child == NULL) {
+		itemList* tmp = node->itemshead.next;
+		while (tmp) {
+			if (tmp->data->x >= xmin && tmp->data->y <= xmax && tmp->data->y >= ymin && tmp->data->y <= ymax)
+				printf("(%d; %d) %s\n", tmp->data->x, tmp->data->y, tmp->data->info);
+			tmp = tmp->next;
+		}
+		return 0;
+	}
+	else {
+		int qmin = quadrant(xmin, ymin, node->xmin, node->xmax, node->ymin, node->ymax);
+		int qmax = quadrant(xmax, ymax, node->xmin, node->xmax, node->ymin, node->ymax);
+		if (qmin == qmax) rangeTraverse(&node->child[qmin], xmin, xmax, ymin, ymax);
+		else if (abs(qmin - qmax) == 2) {
+			for (int i = 0; i < 4; i++) rangeTraverse(&node->child[i], xmin, xmax, ymin, ymax);
+		}
+		else {
+			rangeTraverse(&node->child[qmin], xmin, xmax, ymin, ymax);
+			rangeTraverse(&node->child[qmax], xmin, xmax, ymin, ymax);
+		}
+	}
+	return 0;
 }
 
 int properties(QTree* t) {
