@@ -108,6 +108,10 @@ int nearestNeighbour(QTree* t, int x, int y) {
 		printf("Item not found\n");
 		return 1;
 	}
+	if (t->n == 1) {
+		printf("There is only one point in the tree, it is alone\n");
+		return 1;
+	}
 	Node* tmp = r;
 	while (tmp) {
 		p = checkNode(tmp, x, y);
@@ -115,6 +119,10 @@ int nearestNeighbour(QTree* t, int x, int y) {
 		tmp = tmp->parent;
 	}
 	double mindist = sqrdist(p, ans);
+	if (t->n == 2) {
+		printf("Nearest neighbour:\n(%d; %d) %s\ndist = %f\n", p->data->x, p->data->y, p->data->info, sqrt(mindist));
+		return 1;
+	}
 	int xmin, xmax, ymin, ymax;
 	int a = abs(x - p->data->x);
 	int b = abs(x - p->data->y);
