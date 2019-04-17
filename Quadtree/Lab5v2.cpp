@@ -143,7 +143,7 @@ int nearTraverse(Node* node, int xmin, int xmax, int ymin, int ymax, double* min
 	if (node->child == NULL) {
 		itemList* tmp = node->itemshead.next;
 		while (tmp) {
-			if (tmp->data->x >= xmin && tmp->data->y <= xmax && tmp->data->y >= ymin && tmp->data->y <= ymax)
+			if (tmp->data->x >= xmin && tmp->data->x <= xmax && tmp->data->y >= ymin && tmp->data->y <= ymax)
 				if (sqrdist(tmp, p) < *mindist && sqrdist(tmp, p)) {
 					*mindist = sqrdist(tmp, p);
 					*ans = tmp;
@@ -310,7 +310,7 @@ int rangeTraverse(Node* node, int xmin, int xmax, int ymin, int ymax) {
 	if (node->child == NULL) {
 		itemList* tmp = node->itemshead.next;
 		while (tmp) {
-			if (tmp->data->x >= xmin && tmp->data->y <= xmax && tmp->data->y >= ymin && tmp->data->y <= ymax)
+			if (tmp->data->x >= xmin && tmp->data->x <= xmax && tmp->data->y >= ymin && tmp->data->y <= ymax)
 				printf("(%d; %d) %s\n", tmp->data->x, tmp->data->y, tmp->data->info);
 			tmp = tmp->next;
 		}
