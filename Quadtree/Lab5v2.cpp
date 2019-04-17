@@ -75,7 +75,6 @@ int search(QTree* t, Node** node, itemList** answer, int x, int y);
 itemList*** traverse(Node* node, itemList*** arrptr, int* n);
 int showXDirectOrder(QTree* t);
 int showXRange(QTree* t);
-int inRange(itemList*, int xmin, int xmax, int ymin, int ymax);
 int showTree(QTree* t);
 int treeView(Node* r, int lvl);
 int delNode(Node* r, int i);
@@ -117,30 +116,6 @@ int nearestNeighbour(QTree* t, int x, int y) {
 	}
 	double mindist = sqrdist(p, ans);
 	int xmin, xmax, ymin, ymax;
-	/*if (x < p->data->x) {
-		xmin = (2 * x - p->data->x);
-		xmax = p->data->x;
-	}
-	else if (x == p->data->x) {
-		xmin = x - abs(y - p->data->y);
-		xmax = x + abs(y - p->data->y);
-	}
-	else {
-		xmin = p->data->x;
-		xmax = (2 * x - p->data->x);
-	}
-	if (y < p->data->y) {
-		ymin = (2 * y - p->data->y);
-		ymax = p->data->y;
-	}
-	else if (y == p->data->y) {
-		ymin = y - abs(x - p->data->x);
-		ymax = y + abs(x - p->data->y);
-	}
-	else {
-		ymin = p->data->y;
-		ymax = 2 * y - p->data->y;
-	}*/
 	int a = abs(x - p->data->x);
 	int b = abs(x - p->data->y);
 	a = (a > b) ? a : b;
@@ -151,7 +126,7 @@ int nearestNeighbour(QTree* t, int x, int y) {
 	itemList* nearest = p;
 	tmp = t->root;
 	nearTraverse(tmp, xmin, xmax, ymin, ymax, &mindist, &nearest, ans);
-	printf("Nearest neighbour:\n(%d; %d) %s\ndist = %f", nearest->data->x, nearest->data->y, nearest->data->info, sqrt(mindist));
+	printf("Nearest neighbour:\n(%d; %d) %s\ndist = %f\n", nearest->data->x, nearest->data->y, nearest->data->info, sqrt(mindist));
 	return 0;
 }
 
@@ -185,22 +160,23 @@ int nearTraverse(Node* node, int xmin, int xmax, int ymin, int ymax, double* min
 }
 
 itemList* checkNode(Node* node, int x, int y) {
+	itemList* a;
 	if (node->itemshead.next) 
 			if (node->itemshead.next->data->x != x || node->itemshead.next->data->y != y) return node->itemshead.next;
 			else if (node->itemshead.next->next)
 				if (node->itemshead.next->next->data->x != x || node->itemshead.next->next->data->y != y)
 					return node->itemshead.next->next;
 	if (node->child) {
-		if (!checkNode(&node->child[0], x, y)) {
-			if (!checkNode(&node->child[1], x, y)) {
-				if (!checkNode(&node->child[2], x, y)) {
+		if (!(a = checkNode(&node->child[0], x, y))) {
+			if (!(a = checkNode(&node->child[1], x, y))) {
+				if (!(a = checkNode(&node->child[2], x, y))) {
 					return checkNode(&node->child[3], x, y);
 				}
-				else return checkNode(&node->child[2], x, y);
+				else return a;
 			}
-			else return checkNode(&node->child[1], x, y);
+			else return a;
 		}
-		else return checkNode(&node->child[0], x, y);
+		else return a;
 	}
 	else return NULL;
 }
@@ -299,38 +275,6 @@ int treeView(Node* r, int lvl) {
 	}
 	return 0;
 }
-
-int inRange(itemList* item, int xmin, int xmax, int ymin, int ymax) {
-	if (!item) return 1;
-	int x = item->data->x, y = item->data->y;
-	if (x >= xmin && x <= xmax && y <= ymax && y >= ymin) return 1;
-	else return 0;
-}
-/*
-int showRange(QTree* t) {
-	if (!t) return 2;
-	int xmin, xmax, ymin, ymax;
-	printf("Enter key range:\n");
-	printf("Min x: -->");
-	getInt(&xmin, -1);
-	printf("Max x: -->");
-	getInt(&xmax, -1);
-	printf("Min y: -->");
-	getInt(&ymin, -1);
-	printf("Max y: -->");
-	getInt(&ymax, -1);
-	if (xmin > t->root->xmax || xmax < t->root->xmin || ymin > t->root->ymax || ymax < t->root->xmin) {
-		printf("This area doesn't belong to the tree\n");
-		return 1;
-	}
-	itemList** arrptr = (itemList**)malloc(t->n * sizeof(itemList*));
-	int n = 0;
-	traverse(t->root, &arrptr, &n);
-	for (int i = 0; i < n; i++)
-		if (inRange(arrptr[i], xmin, xmax, ymin, ymax))
-			printf("%d\t%d\t%s\n", arrptr[i]->data->x, arrptr[i]->data->y, arrptr[i]->data->info);
-	return 1;
-}*/
 
 int showXRange(QTree* t) {
 	if (!t) return 2;
