@@ -66,7 +66,7 @@ struct Graph {
 	int edgeN;
 };
 
-const char* loadmsgs[] = { "0. Quit", "1. Load graph", "2. Generate graph", "3. Generate graph" };
+const char* loadmsgs[] = { "0. Quit", "1. Load graph", "2. Generate graph", "3. Create graph manually" };
 const char* menu[] = { "0. Quit", "1. Add vertex", "2. Add edge", "3. Delete vertex", "4. Decompose graph", "5. Show adjacency lists", "6. Save graph", "7. Timing", "8. Graph properties" };
 
 const int NLoadMsgs = sizeof(loadmsgs) / sizeof(loadmsgs[0]);
@@ -82,9 +82,15 @@ int showAdjLists(Graph*);
 int dsave(Graph*);
 int timing(Graph*);
 int properties(Graph*);
+int dload(Graph*);
+int dgenerate(Graph*);
+int dcreate(Graph*);
 char* getStr(int mode);
 
-int(*lfptr[])(Graph*) = { NULL, dvertexInsert, dedgeInsert, dvertexRemove, decompose, showAdjLists, dsave, timing, properties };
+int(*mfptr[])(Graph*) = { NULL, dvertexInsert, dedgeInsert, dvertexRemove, decompose, showAdjLists, dsave, timing, properties };
+int(*lfptr[])(Graph*) = { NULL, dload, dgenerate, dcreate };
+
+
 
 int dialog(const char* msgs[], int N) {
 	int rc;
