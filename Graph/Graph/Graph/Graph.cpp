@@ -47,6 +47,11 @@
 #include <math.h>
 #pragma warning(disable:4996)
 
+#define GRAPH_NULLPTR 1
+#define FNAME_NULLPTR 2
+#define LOADING_FAILURE 3
+
+
 
 
 struct Point {
@@ -68,6 +73,7 @@ struct Graph {
 
 const char* loadmsgs[] = { "0. Quit", "1. Load graph", "2. Generate graph", "3. Create graph manually" };
 const char* menu[] = { "0. Quit", "1. Add vertex", "2. Add edge", "3. Delete vertex", "4. Decompose graph", "5. Show adjacency lists", "6. Save graph", "7. Timing", "8. Graph properties" };
+const char* loaderrs[] = { "Ok", "Graph nullptr", "Filename nullptr", "Failed to load the file" };
 
 const int NLoadMsgs = sizeof(loadmsgs) / sizeof(loadmsgs[0]);
 const int NMenu = sizeof(menu) / sizeof(menu[0]);
@@ -85,13 +91,53 @@ int properties(Graph*);
 int dload(Graph*);
 int dgenerate(Graph*);
 int dcreate(Graph*);
+int load(Graph* g, char* fname);
 char* getStr(int mode);
 
 int(*mfptr[])(Graph*) = { NULL, dvertexInsert, dedgeInsert, dvertexRemove, decompose, showAdjLists, dsave, timing, properties };
 int(*lfptr[])(Graph*) = { NULL, dload, dgenerate, dcreate };
 
 
+char *getStr(int mode = 1) {
+	char *ptr = (char*)malloc(sizeof(char));
+	char buf[81];
+	int n, len = 0;
+	*ptr = '\0';
+	if (mode) scanf_s("%*c");
+	do {
+		n = scanf_s("%80[^\n]", buf, 81);
+		if (n < 0) {
+			free(ptr);
+			ptr = NULL;
+			continue;
+		}
+		if (n == 0) scanf_s("%*c");
+		else {
+			len += strlen(buf);
+			ptr = (char*)realloc(ptr, len + 1);
+			strcat(ptr, buf);
+		}
+	} while (n > 0);
+	return ptr;
+}
 
+int dload(Graph* g) {
+	puts("Enter file name:");
+	char* fname = getStr(0);
+	int rc = load(g, fname);
+	printf("%s\n", loaderrs[rc]);
+}
+
+int load(Graph* g, char* fname) {
+	if (!g) return GRAPH_NULLPTR;
+	if (!fname) return FNAME_NULLPTR;
+	FILE* fd = NULL;
+	fopen_s(&fd, fname, "r+b");
+	if (!fd) return LOADING_FAILURE;
+	puts("test");
+	fclose(fd);
+	return 0;
+}
 
 
 int dialog(const char* msgs[], int N) {
