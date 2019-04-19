@@ -1,0 +1,5 @@
+﻿  Graph.cpp
+c:\users\troja\documents\github\labs\graph\graph\graph\graph.cpp(107): warning C4473: "scanf": передано недостаточно аргументов для строки формата
+  c:\users\troja\documents\github\labs\graph\graph\graph\graph.cpp(107): note: заполнители и их параметры ожидают переменное число аргументов в количестве 1, но было предоставлено 0
+  c:\users\troja\documents\github\labs\graph\graph\graph\graph.cpp(107): note: отсутствующий вариативный аргумент "1" требуется для строки форматирования "%c"
+  Graph.vcxproj -> C:\Users\troja\Documents\GitHub\labs\graph\graph\Debug\Graph.exe

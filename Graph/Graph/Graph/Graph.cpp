@@ -50,7 +50,7 @@
 #define GRAPH_NULLPTR 1
 #define FNAME_NULLPTR 2
 #define LOADING_FAILURE 3
-
+#define DUPLICATE_POINT 2
 
 
 
@@ -72,14 +72,16 @@ struct Graph {
 };
 
 const char* loadmsgs[] = { "0. Quit", "1. Load graph", "2. Generate graph", "3. Create graph manually" };
-const char* menu[] = { "0. Quit", "1. Add vertex", "2. Add edge", "3. Delete vertex", "4. Decompose graph", "5. Show adjacency lists", "6. Save graph", "7. Timing", "8. Graph properties" };
+const char* menu[] = { "0. Quit", "1. Add vertex", "2. Add edge", "3. Delete vertex", "4. Strondly connected components", "5. Show adjacency lists", "6. Save graph", "7. Timing", "8. Graph properties" };
 const char* loaderrs[] = { "Ok", "Graph nullptr", "Filename nullptr", "Failed to load the file" };
+const char* createmsgs[] = { "0. Quit", "1. Add vertex", "2. Add edge" };
 
 const int NLoadMsgs = sizeof(loadmsgs) / sizeof(loadmsgs[0]);
 const int NMenu = sizeof(menu) / sizeof(menu[0]);
+const int NCreate = sizeof(createmsgs) / sizeof(createmsgs[0]);
 
 int dialog(const char* msgs[], int N);
-int getInt(int *t, int mode);
+int getInt(int *t, int mode = 0);
 int dvertexInsert(Graph*);
 int dedgeInsert(Graph*);
 int dvertexRemove(Graph*);
@@ -92,11 +94,51 @@ int dload(Graph*);
 int dgenerate(Graph*);
 int dcreate(Graph*);
 int load(Graph* g, char* fname);
+int getDouble(double* t);
+int vertexInsert(Graph* g, double x, double y);
+int search(Graph* g, double x, double y);
 char* getStr(int mode);
+
 
 int(*mfptr[])(Graph*) = { NULL, dvertexInsert, dedgeInsert, dvertexRemove, decompose, showAdjLists, dsave, timing, properties };
 int(*lfptr[])(Graph*) = { NULL, dload, dgenerate, dcreate };
 
+
+int search(Graph* g, double x, double)
+
+int getDouble(double* t) {
+	int r = scanf("%lf",t);
+	printf("%d\n", r);
+	scanf("%c");
+	return 0;
+}
+
+
+int vertexInsert(Graph* g, double x, double y) {
+	if (!g) return GRAPH_NULLPTR;
+	if (search(g, x, y)) return DUPLICATE_POINT;
+}
+
+int dcreate(Graph* g) {
+	int m;
+	do {
+		
+		m = dialog(createmsgs, NCreate);
+		if (m == 1) dvertexInsert(g);
+		if (m == 2) dedgeInsert(g);
+	} while (m);
+	return 0;
+}
+
+int dvertexInsert(Graph* g) {
+	int rc;
+	double x, y;
+	printf("Enter x: --> ");
+	getDouble(&x);
+	printf("Enter y: --> ");
+	getDouble(&y);
+	vertexInsert(Graph* g, double x, double y);
+}
 
 char *getStr(int mode = 1) {
 	char *ptr = (char*)malloc(sizeof(char));
@@ -178,6 +220,11 @@ char *getStr(int mode = 1) {
 
 int main() {
 	Graph g = { NULL, 0, 0 };
-	int rc;
+	double d;
+	while (1) {
+		getDouble(&d);
+		printf("%f\n", d);
+	}
+	return 0;
 	while (rc = dialog(loadmsgs, NLoadMsgs)) if (!lfptr[rc](&g)) break;
 }
