@@ -56,8 +56,8 @@ struct Point {
 };
 
 struct AdjList {
-	Point data;
-	Point* next;
+	Point* data;
+	AdjList* next;
 };
 
 struct Graph {
@@ -92,6 +92,8 @@ int(*lfptr[])(Graph*) = { NULL, dload, dgenerate, dcreate };
 
 
 
+
+
 int dialog(const char* msgs[], int N) {
 	int rc;
 	do {
@@ -99,7 +101,7 @@ int dialog(const char* msgs[], int N) {
 		puts("Make your choice: -->");
 		if (!getInt(&rc, 0)) rc = 0;
 		if (rc >= 0 && rc < N) continue;
-		puts("I don't understant you. Try again");
+		puts("I don't understand you. Try again");
 	} while (rc < 0 || rc > N);
 	return rc;
 }
