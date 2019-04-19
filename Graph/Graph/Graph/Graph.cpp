@@ -3,6 +3,8 @@
 
 вывод графа в виде списков смежности
 
+а у нас может быть мультиграф???
+
 1. Написать функцию считывания вещественных чисел (getDouble (double* t));
 2. Создание графа:
 - загрузка из файла
@@ -51,17 +53,33 @@
 #define FNAME_NULLPTR 2
 #define LOADING_FAILURE 3
 #define DUPLICATE_POINT 2
+#define NOT_FOUND -1
 
 
+#define WHITE 0
+#define GRAY 1
+#define BLACK 2
+
+struct Vertex {
+	Point* point;
+	int color;
+	int dTime;
+	int fTime;
+};
+
+struct Edge {
+	int idFirst;
+	int idSecond;
+};
 
 struct Point {
 	double x;
 	double y;
-	int name;
+	int id;
 };
 
 struct AdjList {
-	Point* data;
+	Vertex* vertex;
 	AdjList* next;
 };
 
@@ -72,9 +90,11 @@ struct Graph {
 };
 
 const char* loadmsgs[] = { "0. Quit", "1. Load graph", "2. Generate graph", "3. Create graph manually" };
-const char* menu[] = { "0. Quit", "1. Add vertex", "2. Add edge", "3. Delete vertex", "4. Strondly connected components", "5. Show adjacency lists", "6. Save graph", "7. Timing", "8. Graph properties" };
+const char* menu[] = { "0. Quit", "1. Add vertex", "2. Add edge", "3. Delete vertex", "4. Strondly connected components", "5. Display graph (as adjacency lists)", "6. Save graph", "7. Timing", "8. Graph properties" };
 const char* loaderrs[] = { "Ok", "Graph nullptr", "Filename nullptr", "Failed to load the file" };
 const char* createmsgs[] = { "0. Quit", "1. Add vertex", "2. Add edge" };
+const char* insertVertexErrs[] = { "Ok", "Graph nullptr", "Duplicate point" };
+const char* insertEdgeErrs[] = { "Ok" };
 
 const int NLoadMsgs = sizeof(loadmsgs) / sizeof(loadmsgs[0]);
 const int NMenu = sizeof(menu) / sizeof(menu[0]);
@@ -86,7 +106,7 @@ int dvertexInsert(Graph*);
 int dedgeInsert(Graph*);
 int dvertexRemove(Graph*);
 int decompose(Graph*);
-int showAdjLists(Graph*);
+int display(Graph*);
 int dsave(Graph*);
 int timing(Graph*);
 int properties(Graph*);
@@ -96,15 +116,44 @@ int dcreate(Graph*);
 int load(Graph* g, char* fname);
 int getDouble(double* t);
 int vertexInsert(Graph* g, double x, double y);
-int search(Graph* g, double x, double y);
+int vertexSearch(Graph* g, double x, double y);
+int edgeInsert(Graph* g, int fid, int sid);
 char* getStr(int mode);
 
 
-int(*mfptr[])(Graph*) = { NULL, dvertexInsert, dedgeInsert, dvertexRemove, decompose, showAdjLists, dsave, timing, properties };
+int(*mfptr[])(Graph*) = { NULL, dvertexInsert, dedgeInsert, dvertexRemove, decompose, display, dsave, timing, properties };
 int(*lfptr[])(Graph*) = { NULL, dload, dgenerate, dcreate };
 
+int edgeInsert(Graph* g, int fid, int sid) {
+	if (!g) return GRAPH_NULLPTR;
 
-int search(Graph* g, double x, double)
+	AdjList* a = (AdjList*)malloc(sizeof(AdjList));
+	a->vertex = g->adjlist[sid].vertex;
+	a->next = g->adjlist[fid].next;
+	g->adjlist[fid].next = a;
+	g->edgeN++;
+}
+
+int dedgeInsert(Graph *g) {
+	if (!g) return GRAPH_NULLPTR;
+	display(g);
+	int fid, sid;
+	printf("Enter the first vertex id: --> ");
+	getInt(&fid, 0);
+	printf("Enter the second vertex id: --> ");
+	getInt(&sid, 0);
+	int rc = edgeInsert(g, fid, sid);
+	printf("%s\n", insertEdgeErrs[rc]);
+	return 0;
+}
+
+
+int vertexSearch(Graph* g, double x, double y) {
+	for (int i = 0; i < g->vertexN; i++) {
+		if (g->adjlist[i].vertex->point->x == x && g->adjlist[i].vertex->point->y == y) return i;
+	}
+	return NOT_FOUND;
+}
 
 int getDouble(double* t) {
 	int r = scanf("%lf",t);
@@ -113,13 +162,24 @@ int getDouble(double* t) {
 	return 0;
 }
 
-
 int vertexInsert(Graph* g, double x, double y) {
 	if (!g) return GRAPH_NULLPTR;
-	if (search(g, x, y)) return DUPLICATE_POINT;
+	if (vertexSearch(g, x, y) != NOT_FOUND) return DUPLICATE_POINT;
+	Point* p = (Point*)calloc(1, sizeof(Point));
+	p->x = x;
+	p->y = y;
+	g->vertexN++;
+	p->id = g->vertexN;
+	g->adjlist = (AdjList*)realloc(g->adjlist, g->vertexN);
+	Vertex* v = (Vertex*)calloc(1, sizeof(Vertex));
+	v->point = p;
+	g->adjlist[g->vertexN].next = NULL;
+	g->adjlist[g->vertexN].vertex = v;
+	return 0;
 }
 
 int dcreate(Graph* g) {
+	if (!g) return GRAPH_NULLPTR;
 	int m;
 	do {
 		
@@ -131,13 +191,16 @@ int dcreate(Graph* g) {
 }
 
 int dvertexInsert(Graph* g) {
+	if (!g) return GRAPH_NULLPTR;
 	int rc;
 	double x, y;
 	printf("Enter x: --> ");
 	getDouble(&x);
 	printf("Enter y: --> ");
 	getDouble(&y);
-	vertexInsert(Graph* g, double x, double y);
+	rc = vertexInsert(g, x, y);
+	if (!rc) printf("Created a new vertex, id = %d", g->vertexN);
+	printf("%s", insertVertexErrs[rc]);
 }
 
 char *getStr(int mode = 1) {
@@ -164,6 +227,7 @@ char *getStr(int mode = 1) {
 }
 
 int dload(Graph* g) {
+	if (!g) return GRAPH_NULLPTR;
 	puts("Enter file name:");
 	char* fname = getStr(0);
 	int rc = load(g, fname);
@@ -220,11 +284,7 @@ char *getStr(int mode = 1) {
 
 int main() {
 	Graph g = { NULL, 0, 0 };
-	double d;
-	while (1) {
-		getDouble(&d);
-		printf("%f\n", d);
-	}
-	return 0;
+	double d, int rc;
 	while (rc = dialog(loadmsgs, NLoadMsgs)) if (!lfptr[rc](&g)) break;
+	return 0;
 }
