@@ -4,6 +4,7 @@
 вывод графа в виде списков смежности
 
 а у нас может быть мультиграф???
+у нас могут быть петли???
 
 1. Написать функцию считывания вещественных чисел (getDouble (double* t));
 2. Создание графа:
@@ -54,11 +55,20 @@
 #define LOADING_FAILURE 3
 #define DUPLICATE_POINT 2
 #define NOT_FOUND -1
+#define EDGE_DUPLICATE 2
+#define UNDEFINED_VERTEX 2
+#define VERTEX_NOT_FOUND 3
 
 
 #define WHITE 0
 #define GRAY 1
 #define BLACK 2
+
+struct Point {
+	double x;
+	double y;
+	int id;
+};
 
 struct Vertex {
 	Point* point;
@@ -72,11 +82,7 @@ struct Edge {
 	int idSecond;
 };
 
-struct Point {
-	double x;
-	double y;
-	int id;
-};
+
 
 struct AdjList {
 	Vertex* vertex;
@@ -94,11 +100,14 @@ const char* menu[] = { "0. Quit", "1. Add vertex", "2. Add edge", "3. Delete ver
 const char* loaderrs[] = { "Ok", "Graph nullptr", "Filename nullptr", "Failed to load the file" };
 const char* createmsgs[] = { "0. Quit", "1. Add vertex", "2. Add edge" };
 const char* insertVertexErrs[] = { "Ok", "Graph nullptr", "Duplicate point" };
-const char* insertEdgeErrs[] = { "Ok" };
+const char* insertEdgeErrs[] = { "Ok", "Graph nullptr" };
+const char* removeVertexMenu[] = { "0. Quit", "1. Enter coordinates", "2. Enter id" };
+const char* removeVertexErrs[] = { "Ok", "Graph nullptr", "Undefined vertex", "Vertex not found" };
 
 const int NLoadMsgs = sizeof(loadmsgs) / sizeof(loadmsgs[0]);
 const int NMenu = sizeof(menu) / sizeof(menu[0]);
 const int NCreate = sizeof(createmsgs) / sizeof(createmsgs[0]);
+const int NRemoveVertexMenu = sizeof(removeVertexMenu) / sizeof(removeVertexMenu[0]);
 
 int dialog(const char* msgs[], int N);
 int getInt(int *t, int mode = 0);
@@ -113,25 +122,76 @@ int properties(Graph*);
 int dload(Graph*);
 int dgenerate(Graph*);
 int dcreate(Graph*);
+int getCords(Graph*);
+int getId(Graph*);
 int load(Graph* g, char* fname);
 int getDouble(double* t);
 int vertexInsert(Graph* g, double x, double y);
 int vertexSearch(Graph* g, double x, double y);
+int vertexRemove(Graph* g, double* x, double* y, int* id);
 int edgeInsert(Graph* g, int fid, int sid);
 char* getStr(int mode);
+AdjList* edgeSearch(Graph* g, int fid, int sid);
 
 
 int(*mfptr[])(Graph*) = { NULL, dvertexInsert, dedgeInsert, dvertexRemove, decompose, display, dsave, timing, properties };
 int(*lfptr[])(Graph*) = { NULL, dload, dgenerate, dcreate };
+int(*rvfptr[])(Graph*) = { NULL, getCords, getId };
+
+int vertexRemove(Graph*)
+
+int getCords(Graph* g) {
+	if (!g) return GRAPH_NULLPTR;
+	double x, y;
+	puts("Enter coordinates:");
+	printf("X: --> ");
+	getDouble(&x);
+	printf("Y: --> ");
+	getDouble(&y);
+	int rc = vertexRemove(g, &x, &y, NULL);
+	printf("%s\n", removeVertexErrs[rc]);
+	return 0;
+}
+
+int getId(Graph* g) {
+	if (!g) return GRAPH_NULLPTR;
+	int id;
+	printf("Id: --> ");
+	getInt(&id);
+	int rc = vertexRemove(g, NULL, NULL, &id);
+	printf("%s\n", removeVertexErrs[rc]);
+	return 0;
+}
+
+int dvertexRemove(Graph* g) {
+	double x, y;
+	int id;
+	//реализовать удаление как по координатам, таки по имени вершины
+	int m = dialog(removeVertexMenu, NRemoveVertexMenu);
+	if (!(rvfptr[m](g))) return 0;
+	return 0;
+}
+
+AdjList* edgeSearch(Graph*g, int fid, int sid) {
+	if (!g) return NULL;
+	AdjList* tmp = g->adjlist[fid].next;
+	while (tmp) {
+		if (tmp->vertex->point->id == sid) return tmp;
+		tmp = tmp->next;
+	}
+	return tmp;
+}
+
 
 int edgeInsert(Graph* g, int fid, int sid) {
 	if (!g) return GRAPH_NULLPTR;
-
+	//if (edgeSearch(g, fid, sid) return EDGE_DUPLICATE; если мультиребра вне закона
 	AdjList* a = (AdjList*)malloc(sizeof(AdjList));
 	a->vertex = g->adjlist[sid].vertex;
 	a->next = g->adjlist[fid].next;
 	g->adjlist[fid].next = a;
 	g->edgeN++;
+	return 0;
 }
 
 int dedgeInsert(Graph *g) {
@@ -258,29 +318,6 @@ int dialog(const char* msgs[], int N) {
 	return rc;
 }
 
-
-char *getStr(int mode = 1) {
-	char *ptr = (char*)malloc(sizeof(char));
-	char buf[81];
-	int n, len = 0;
-	*ptr = '\0';
-	if (mode) scanf_s("%*c");
-	do {
-		n = scanf_s("%80[^\n]", buf, 81);
-		if (n < 0) {
-			free(ptr);
-			ptr = NULL;
-			continue;
-		}
-		if (n == 0) scanf_s("%*c");
-		else {
-			len += strlen(buf);
-			ptr = (char*)realloc(ptr, len + 1);
-			strcat(ptr, buf);
-		}
-	} while (n > 0);
-	return ptr;
-}
 
 int main() {
 	Graph g = { NULL, 0, 0 };
