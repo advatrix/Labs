@@ -1,4 +1,13 @@
 ﻿/*
+
+сделать разложение на сильно связные компоненты
+
+сделать нормальный getDouble
+сделать удаление графа из памяти
+
+
+
+
 координаты вещественые числа
 
 вывод графа в виде списков смежности
@@ -66,6 +75,9 @@ e
 #define VERTEX_NOT_FOUND 2
 #define POINT_NULLPTR 2
 #define SAVE_ERROR 3
+#define FIRST_NOT_FOUND 2
+#define SECOND_NOT_FOUND 3
+#define DUPLICATE_ID 3
 
 #define WHITE 0
 #define GRAY 1
@@ -104,8 +116,8 @@ const char* loadmsgs[] = { "0. Quit", "1. Load graph", "2. Generate graph", "3. 
 const char* menu[] = { "0. Quit", "1. Add vertex", "2. Add edge", "3. Delete vertex", "4. Strongly connected components", "5. Display graph (as adjacency lists)", "6. Save graph", "7. Timing", "8. Graph properties" };
 const char* loaderrs[] = { "Ok", "Graph nullptr", "Filename nullptr", "Failed to load the file" };
 const char* createmsgs[] = { "0. Quit", "1. Add vertex", "2. Add edge" };
-const char* insertVertexErrs[] = { "Ok", "Graph nullptr", "Duplicate point" };
-const char* insertEdgeErrs[] = { "Ok", "Graph nullptr" };
+const char* insertVertexErrs[] = { "Ok", "Graph nullptr", "Duplicate point", "Duplicate ID" };
+const char* insertEdgeErrs[] = { "Ok", "Graph nullptr", "First vertex not found", "Second vertex not found" };
 const char* removeVertexMenu[] = { "0. Quit", "1. Enter coordinates", "2. Enter id" };
 const char* removeVertexErrs[] = { "Ok", "Graph nullptr", "Vertex not found", "Undefined vertex" };
 const char* saveerrs[] = { "Ok", "Graph nullptr", "Filename nullptr", "Saving error" };
@@ -133,7 +145,7 @@ int getId(Graph*);
 int load(Graph* g, char* fname);
 int pointInsert(Graph* g, Point* p);
 int getDouble(double* t);
-int vertexInsert(Graph* g, double x, double y);
+int vertexInsert(Graph* g, double x, double y, int id);
 int vertexCordSearch(Graph* g, double x, double y);
 int vertexIDSearch(Graph* g, int id);
 int vertexRemove(Graph* g, double* x, double* y, int* id);
@@ -252,9 +264,13 @@ int edgeInsert(Graph* g, int fid, int sid) {
 	if (!g) return GRAPH_NULLPTR;
 	//if (edgeSearch(g, fid, sid) return EDGE_DUPLICATE; если мультиребра вне закона
 	AdjList* a = (AdjList*)malloc(sizeof(AdjList));
-	a->vertex = g->adjlist[sid].vertex;
-	a->next = g->adjlist[fid].next;
-	g->adjlist[fid].next = a;
+	int s = vertexIDSearch(g, sid);
+	if (s == -1) return FIRST_NOT_FOUND;
+	int f = vertexIDSearch(g, fid);
+	if (f == -1) return SECOND_NOT_FOUND;
+	a->vertex = g->adjlist[s].vertex;
+	a->next = g->adjlist[f].next;
+	g->adjlist[f].next = a;
 	g->e++;
 	return 0;
 }
@@ -287,14 +303,15 @@ int getDouble(double* t) {
 	return 0;
 }
 
-int vertexInsert(Graph* g, double x, double y) {
+int vertexInsert(Graph* g, double x, double y, int id) {
 	if (!g) return GRAPH_NULLPTR;
-	if (vertexSearch(g, x, y) != NOT_FOUND) return DUPLICATE_POINT;
+	if (vertexCordSearch(g, x, y) != NOT_FOUND) return DUPLICATE_POINT;
+	if (vertexIDSearch(g, id) != NOT_FOUND) return DUPLICATE_ID;
 	Point* p = (Point*)calloc(1, sizeof(Point));
 	p->x = x;
 	p->y = y;
 	g->v++;
-	p->id = g->v;
+	p->id = id;
 	pointInsert(g, p);
 	return 0;
 }
@@ -315,13 +332,15 @@ int dcreate(Graph* g) {
 
 int dvertexInsert(Graph* g) {
 	if (!g) return GRAPH_NULLPTR;
-	int rc;
+	int rc, id;
 	double x, y;
 	printf("Enter x: --> ");
 	getDouble(&x);
 	printf("Enter y: --> ");
 	getDouble(&y);
-	rc = vertexInsert(g, x, y);
+	printf("Enter ID (for example, %d): --> ", g->v);
+	getInt(&id);
+	rc = vertexInsert(g, x, y, id);
 	if (!rc) printf("Created a new vertex, id = %d", g->v);
 	printf("%s", insertVertexErrs[rc]);
 	return 0;
