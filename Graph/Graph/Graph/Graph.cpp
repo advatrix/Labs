@@ -94,6 +94,7 @@ struct Vertex {
 	int color;
 	int dTime;
 	int fTime;
+	Vertex* prev;
 };
 
 struct Edge {
@@ -142,6 +143,9 @@ int dgenerate(Graph*);
 int dcreate(Graph*);
 int getCords(Graph*);
 int getId(Graph*);
+Graph scc(Graph*);
+int dfs(Graph*);
+int dfst(Graph*);
 int load(Graph* g, char* fname);
 int pointInsert(Graph* g, Point* p);
 int getDouble(double* t);
@@ -153,11 +157,51 @@ int edgeInsert(Graph* g, int fid, int sid);
 int save(Graph* g, char* fname);
 char* getStr(int mode);
 AdjList* edgeSearch(Graph* g, int fid, int sid);
-
+Graph transpose(Graph*);
+int dfsVisit(AdjList* a, int* time);
 
 int(*mfptr[])(Graph*) = { NULL, dvertexInsert, dedgeInsert, dvertexRemove, decompose, display, dsave, timing, properties };
 int(*lfptr[])(Graph*) = { NULL, dload, dgenerate, dcreate };
 int(*rvfptr[])(Graph*) = { NULL, getCords, getId };
+
+int dfsVisit(AdjList* a, int* time) {
+	a->vertex->color = GRAY;
+	a->vertex->dTime = *time;
+	(*time)++;
+	AdjList* tmp = a->next;
+	while (tmp) {
+		if (tmp->vertex->color == WHITE) {
+			tmp->vertex->prev = a->vertex;
+			dfsVisit(tmp, time);
+		}
+		tmp = tmp->next;
+	}
+	a->vertex->color = BLACK;
+	(*time)++;
+	a->vertex->fTime = *time;
+	return 0;
+}
+
+
+int dfs(Graph* g) {
+	if (!g) return GRAPH_NULLPTR;
+	for (int i = 0; i < g->v; i++) {
+		Vertex* v = g->adjlist[i].vertex;
+		v->color = WHITE;
+		v->prev = NULL;
+	}
+	int time = 0;
+	for (int i = 0; i < g->v; i++) if (g->adjlist[i].vertex->color == WHITE) dfsVisit(&g->adjlist[i], &time);
+	return 0;
+}
+
+
+Graph scc(Graph* g) {
+	dfs(g);
+	Graph t = transpose(g);
+	dfst(&t);
+	return t;
+}
 
 int vertexIDSearch(Graph* g, int id) {
 	for (int i = 0; i < g->v; i++) if (g->adjlist[i].vertex->point->id == id) return i;
@@ -167,9 +211,20 @@ int vertexIDSearch(Graph* g, int id) {
 int display(Graph* g) {
 	if (!g) return GRAPH_NULLPTR;
 	if (g->v) {
-
+		for (int i = 0; i < g->v; i++) {
+			printf("Vertex %d (%lf; %lf) is connected with", g->adjlist[i].vertex->point->id, g->adjlist[i].vertex->point->x, g->adjlist[i].vertex->point->y);
+			AdjList* tmp = g->adjlist[i].next;
+			if (!tmp) printf(" no vertices");
+			printf("\n");
+			while (tmp) {
+				printf("\t %d (%lf; %lf)\n", tmp->vertex->point->id, tmp->vertex->point->x, tmp->vertex->point->y);
+				tmp = tmp->next;
+			}
+			printf("\n\n");
+		}
 	}
 	else printf("Graph is empty\n");
+	return 0;
 }
 
 int vertexRemove(Graph* g, double* x, double* y, int* id) {
