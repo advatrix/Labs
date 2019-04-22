@@ -78,6 +78,9 @@ e
 #define FIRST_NOT_FOUND 2
 #define SECOND_NOT_FOUND 3
 #define DUPLICATE_ID 3
+#define ARRAY_NULLPTR 1
+#define ADJLIST_NULLPTR 1
+#define TIME_NULLPTR 2
 
 #define WHITE 0
 #define GRAY 1
@@ -129,7 +132,7 @@ const int NCreate = sizeof(createmsgs) / sizeof(createmsgs[0]);
 const int NRemoveVertexMenu = sizeof(removeVertexMenu) / sizeof(removeVertexMenu[0]);
 
 int dialog(const char* msgs[], int N);
-int getInt(int *t, int mode = 0);
+int getInt(int *t, int mode = -1);
 int dvertexInsert(Graph*);
 int dedgeInsert(Graph*);
 int dvertexRemove(Graph*);
@@ -164,7 +167,34 @@ int(*mfptr[])(Graph*) = { NULL, dvertexInsert, dedgeInsert, dvertexRemove, decom
 int(*lfptr[])(Graph*) = { NULL, dload, dgenerate, dcreate };
 int(*rvfptr[])(Graph*) = { NULL, getCords, getId };
 
+int dgenerate(Graph*g) {
+	if (!g) return GRAPH_NULLPTR;
+	puts("text");
+	return 0;
+}
+
+int properties(Graph* g) {
+	if (!g) return GRAPH_NULLPTR;
+	printf("%d vertices\n %d edges\n", g->v, g->e);
+	return 0;
+}
+
+int timing(Graph*g) {
+	if (!g) return GRAPH_NULLPTR;
+	puts("test");
+	return 0;
+}
+
+int decompose(Graph* g) {
+	if (!g) return GRAPH_NULLPTR;
+	Graph t = scc(g);
+	puts("Test");
+	return 0;
+}
+
 int dfsVisit(AdjList* a, int* time) {
+	if (!a) return ADJLIST_NULLPTR;
+	if (!time) return TIME_NULLPTR;
 	a->vertex->color = GRAY;
 	a->vertex->dTime = *time;
 	(*time)++;
@@ -182,6 +212,18 @@ int dfsVisit(AdjList* a, int* time) {
 	return 0;
 }
 
+Graph transpose(Graph* g) {
+	Graph t;
+	for (int i = 0; i < g->v; i++) vertexInsert(&t, g->adjlist[i].vertex->point->x, g->adjlist[i].vertex->point->y, g->adjlist[i].vertex->point->id);
+	for (int i = 0; i < g->v; i++) {
+		AdjList* tmp = g->adjlist[i].next;
+		while (tmp) {
+			edgeInsert(&t, tmp->vertex->point->id, g->adjlist[i].vertex->point->id);
+			tmp = tmp->next;
+		}
+	}
+	return t;
+}
 
 int dfs(Graph* g) {
 	if (!g) return GRAPH_NULLPTR;
@@ -195,6 +237,47 @@ int dfs(Graph* g) {
 	return 0;
 }
 
+int timeSort(AdjList** a, int n) {
+	if (!a) return ARRAY_NULLPTR;
+	AdjList* tmp;
+	for (int i = 0; i < n; i++) {
+		for (int j = 0; j < n - i - 1; j++) {
+			if (a[j]->vertex->dTime < a[j + 1]->vertex->dTime) {
+				tmp = a[j];
+				a[j] = a[j + 1];
+				a[j + 1] = tmp;
+			}
+		}
+	}
+	return 0;
+}
+
+int dfstVisit(AdjList* a) {
+	if (!a) return ADJLIST_NULLPTR;
+	a->vertex->color = GRAY;
+	AdjList* tmp = a->next;
+	while (tmp) {
+		if (tmp->vertex->color == WHITE) {
+			tmp->vertex->prev = a->vertex;
+			dfstVisit(tmp);
+		}
+		tmp = tmp->next;
+	}
+	a->vertex->color = BLACK;
+	return 0;
+}
+
+int dfst(Graph* g) {
+	if (!g) return GRAPH_NULLPTR;
+	AdjList** ptrarr = (AdjList**)malloc(g->v * sizeof(AdjList*));
+	timeSort(ptrarr, g->v);
+	for (int i = 0; i < g->v; i++) {
+		ptrarr[i]->vertex->color = WHITE;
+		ptrarr[i]->vertex->prev = NULL;
+	}
+	for (int i = 0; i < g->v; i++) if (ptrarr[i]->vertex->color == WHITE) dfstVisit(ptrarr[i]);
+	return 0;
+}
 
 Graph scc(Graph* g) {
 	dfs(g);
@@ -387,7 +470,7 @@ int dcreate(Graph* g) {
 
 int dvertexInsert(Graph* g) {
 	if (!g) return GRAPH_NULLPTR;
-	int rc, id;
+	int rc, id = g->v;
 	double x, y;
 	printf("Enter x: --> ");
 	getDouble(&x);
@@ -399,6 +482,35 @@ int dvertexInsert(Graph* g) {
 	if (!rc) printf("Created a new vertex, id = %d", g->v);
 	printf("%s", insertVertexErrs[rc]);
 	return 0;
+}
+
+int getInt(int *t, int mode) {
+	int r;
+	do {
+		r = scanf_s("%d", t);
+		if (r == 1) {
+			if (mode == -1) return r;
+			if (mode == 0) {
+				if (t >= 0) return r;
+				else {
+					printf("Input is incorrect. You should enter a non-negative integer. Try again\n");
+					scanf_s("%*[^\n]");
+					continue;
+				}
+			}
+			else if (mode == 1) {
+				if (t > 0) return r;
+				else {
+					printf("Input is incorrect. You should enter a positive integer. Try again\n");
+					scanf_s("%*[^\n]");
+					continue;
+				}
+			}
+			else return r;
+		}
+		printf("Input is incorrect. You should enter an integer. Try again.\n");
+		scanf_s("%*[^\n]");
+	} while (1);
 }
 
 char *getStr(int mode = 1) {
@@ -520,7 +632,8 @@ int dialog(const char* msgs[], int N) {
 
 int main() {
 	Graph g = { NULL, 0, 0 };
-	double d, int rc;
+	double d;
+	int rc;
 	while (rc = dialog(loadmsgs, NLoadMsgs)) if (!lfptr[rc](&g)) break;
 	return 0;
 }

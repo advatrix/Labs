@@ -1,17 +1,9 @@
 ﻿  Graph.cpp
-c:\users\troja\documents\github\labs\graph\graph\graph\graph.cpp(64): error C2143: синтаксическая ошибка: отсутствие ";" перед "*"
-c:\users\troja\documents\github\labs\graph\graph\graph\graph.cpp(64): error C4430: отсутствует спецификатор типа - предполагается int. Примечание. C++ не поддерживает int по умолчанию
-c:\users\troja\documents\github\labs\graph\graph\graph\graph.cpp(64): error C2238: непредвиденные лексемы перед ";"
-c:\users\troja\documents\github\labs\graph\graph\graph\graph.cpp(153): error C2039: point: не является членом "Vertex"
-  c:\users\troja\documents\github\labs\graph\graph\graph\graph.cpp(63): note:  см. объявление "Vertex"
-c:\users\troja\documents\github\labs\graph\graph\graph\graph.cpp(161): warning C4473: "scanf": передано недостаточно аргументов для строки формата
-  c:\users\troja\documents\github\labs\graph\graph\graph\graph.cpp(161): note: заполнители и их параметры ожидают переменное число аргументов в количестве 1, но было предоставлено 0
-  c:\users\troja\documents\github\labs\graph\graph\graph\graph.cpp(161): note: отсутствующий вариативный аргумент "1" требуется для строки форматирования "%c"
-c:\users\troja\documents\github\labs\graph\graph\graph\graph.cpp(175): error C2039: point: не является членом "Vertex"
-  c:\users\troja\documents\github\labs\graph\graph\graph\graph.cpp(63): note:  см. объявление "Vertex"
-c:\users\troja\documents\github\labs\graph\graph\graph\graph.cpp(262): error C2572: getStr: переопределение параметра по умолчанию: параметр 1
-  c:\users\troja\documents\github\labs\graph\graph\graph\graph.cpp(206): note:  см. объявление "getStr"
-c:\users\troja\documents\github\labs\graph\graph\graph\graph.cpp(262): error C2084: функция "char *getStr(int)" уже имеет текст реализации
-  c:\users\troja\documents\github\labs\graph\graph\graph\graph.cpp(206): note: см. предыдущее определение "getStr"
-c:\users\troja\documents\github\labs\graph\graph\graph\graph.cpp(287): error C2062: тип "int" не требуется
-c:\users\troja\documents\github\labs\graph\graph\graph\graph.cpp(288): error C2065: rc: необъявленный идентификатор
+c:\users\troja\documents\github\labs\graph\graph\graph\graph.cpp(383): warning C4101: id: неиспользованная локальная переменная
+c:\users\troja\documents\github\labs\graph\graph\graph\graph.cpp(382): warning C4101: y: неиспользованная локальная переменная
+c:\users\troja\documents\github\labs\graph\graph\graph\graph.cpp(382): warning C4101: x: неиспользованная локальная переменная
+c:\users\troja\documents\github\labs\graph\graph\graph\graph.cpp(440): warning C4473: "scanf": передано недостаточно аргументов для строки формата
+  c:\users\troja\documents\github\labs\graph\graph\graph\graph.cpp(440): note: заполнители и их параметры ожидают переменное число аргументов в количестве 1, но было предоставлено 0
+  c:\users\troja\documents\github\labs\graph\graph\graph\graph.cpp(440): note: отсутствующий вариативный аргумент "1" требуется для строки форматирования "%c"
+c:\users\troja\documents\github\labs\graph\graph\graph\graph.cpp(635): warning C4101: d: неиспользованная локальная переменная
+  Graph.vcxproj -> C:\Users\troja\Documents\GitHub\labs\graph\graph\Debug\Graph.exe
