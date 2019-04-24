@@ -1,6 +1,15 @@
 ﻿/*
 
+сделать нормальную структуру стека
+
+пофиксить выход из программы при завершении ручного создания графа
+
+
 сделать разложение на сильно связные компоненты
+
+
+
+при первом поиске в глубину вершины надо записывать в стек по времени f
 
 сделать нормальный getDouble
 сделать удаление графа из памяти
@@ -12,8 +21,8 @@
 
 вывод графа в виде списков смежности
 
-а у нас может быть мультиграф???
-у нас могут быть петли???
+а у нас может быть мультиграф??? - нет
+у нас могут быть петли??? - да
 
 1. Написать функцию считывания вещественных чисел (getDouble (double* t));
 2. Создание графа:
@@ -26,11 +35,10 @@
 
 вывод возможностей загрузки графа
 1. Из файла
-	- структура файла???
 2. Сгенерировать
-	какие входные данные нужны для генерации?
-	- (макс) число вершин
-	- рёбра????
+	входные данные:
+		количество вершин
+		количество ребер
 3. Вручную
 	- ручная вставка вершин и ребер в граф
 
@@ -81,10 +89,14 @@ e
 #define ARRAY_NULLPTR 1
 #define ADJLIST_NULLPTR 1
 #define TIME_NULLPTR 2
+#define PARENT_NULLPTR 1
+#define CHILD_NULLPTR 2
+#define NODE_NULLPTR 1
 
 #define WHITE 0
 #define GRAY 1
 #define BLACK 2
+
 
 struct Point {
 	double x;
@@ -98,6 +110,8 @@ struct Vertex {
 	int dTime;
 	int fTime;
 	Vertex* prev;
+	Vertex** child; //ссылка на массив потомков в дереве поиска
+	int nChilds; //количество потомков в дереве поиска
 };
 
 struct Edge {
@@ -114,6 +128,11 @@ struct Graph {
 	AdjList* adjlist;
 	int v;
 	int e;
+};
+
+struct Stack {
+	AdjList* vertex;
+	Stack* next;
 };
 
 const char* loadmsgs[] = { "0. Quit", "1. Load graph", "2. Generate graph", "3. Create graph manually" };
@@ -146,9 +165,9 @@ int dgenerate(Graph*);
 int dcreate(Graph*);
 int getCords(Graph*);
 int getId(Graph*);
-Graph scc(Graph*);
-int dfs(Graph*);
-int dfst(Graph*);
+//Graph scc(Graph*);
+//int dfs(Graph*);
+//int dfst(Graph*);
 int load(Graph* g, char* fname);
 int pointInsert(Graph* g, Point* p);
 int getDouble(double* t);
@@ -161,11 +180,158 @@ int save(Graph* g, char* fname);
 char* getStr(int mode);
 AdjList* edgeSearch(Graph* g, int fid, int sid);
 Graph transpose(Graph*);
-int dfsVisit(AdjList* a, int* time);
+//int dfsVisit(AdjList* a, int* time);
+int insertChild(Vertex* parent, Vertex* child);
+
 
 int(*mfptr[])(Graph*) = { NULL, dvertexInsert, dedgeInsert, dvertexRemove, decompose, display, dsave, timing, properties };
 int(*lfptr[])(Graph*) = { NULL, dload, dgenerate, dcreate };
 int(*rvfptr[])(Graph*) = { NULL, getCords, getId };
+/*
+
+
+
+
+*/
+
+Graph transpose(Graph* g) {
+	Graph t;
+	for (int i = 0; i < g->v; i++) vertexInsert(&t, g->adjlist[i].vertex->point->x, g->adjlist[i].vertex->point->y, g->adjlist[i].vertex->point->id);
+	for (int i = 0; i < g->v; i++) {
+		AdjList* tmp = g->adjlist[i].next;
+		while (tmp) {
+			edgeInsert(&t, tmp->vertex->point->id, g->adjlist[i].vertex->point->id);
+			tmp = tmp->next;
+		}
+	}
+	return t;
+}
+
+int push(Stack* stack, AdjList* a) {
+	if (!a) return ADJLIST_NULLPTR;
+	Stack* tmp = (Stack*)malloc(sizeof(Stack));
+	tmp->vertex = a;
+	tmp->next = stack;
+	stack = tmp;
+	return 0;
+}
+
+int dfsVisit(AdjList* a, Stack* stack, int* time) {
+	if (!a) return ADJLIST_NULLPTR;
+	if (!time) return TIME_NULLPTR;
+	a->vertex->color = GRAY;
+	a->vertex->dTime = *time;
+	(*time)++;
+	AdjList* tmp = a->next;
+	while (tmp) {
+		if (tmp->vertex->color == WHITE) {
+			tmp->vertex->prev = a->vertex;
+			insertChild(a->vertex, tmp->vertex);
+			dfsVisit(tmp, stack, time);
+		}
+		tmp = tmp->next;
+	}
+	a->vertex->color = BLACK;
+	(*time)++;
+	a->vertex->fTime = *time;
+	push(stack, a);
+	return 0;
+}
+
+int dfs(Graph* g, Stack* stack) {
+	if (!g) return GRAPH_NULLPTR;
+	for (int i = 0; i < g->v; i++) {
+		g->adjlist[i].vertex->color = WHITE;
+		g->adjlist[i].vertex->prev = NULL;
+		g->adjlist[i].vertex->child = NULL;
+	}
+	int time = 0;
+	for (int i = 0; i < g->v; i++) if (g->adjlist[i].vertex->color == WHITE) dfsVisit(&g->adjlist[i], stack, &time);
+	return 0;
+}
+
+AdjList* pop(Stack* stack) {
+	if (!stack) return NULL;
+	/*Vertex* t = stack->vertex;
+	AdjList* tmp = stack;
+	stack = stack->next;
+	free(tmp);
+	return t;*/
+	AdjList* t = stack->vertex;
+	Stack* tmp = stack;
+	stack = stack->next;
+	free(tmp);
+	return t;
+}
+
+int insertChild(Vertex* p, Vertex* c) {
+	if (!p) return PARENT_NULLPTR;
+	if (!c) return CHILD_NULLPTR;
+	p->child = (Vertex**)realloc(p->child, p->nChilds);
+	p->child[p->nChilds] = c;
+	p->nChilds++;
+	return 0;
+}
+
+int dfstVisit(AdjList* a, Stack* stack) {
+	if (!a) return ADJLIST_NULLPTR;
+	a->vertex->color = GRAY;
+	AdjList* tmp = a;
+	while (tmp) {
+		if (tmp->vertex->color == WHITE) {
+			tmp->vertex->prev = a->vertex;
+			insertChild(a->vertex, tmp->vertex);
+			dfstVisit(tmp, stack);
+		}
+		tmp = tmp->next;
+	}
+	a->vertex->color = BLACK;
+	return 0;
+}
+
+int dfst(Graph* g, Stack* stack) {
+	if (!g) return GRAPH_NULLPTR;
+	for (int i = 0; i < g->v; i++) {
+		g->adjlist[i].vertex->color = WHITE;
+		g->adjlist[i].vertex->prev = NULL;
+		g->adjlist[i].vertex->child = NULL;
+	}
+	AdjList* tmp;
+	while (tmp = pop(stack)) if (tmp->vertex->color == WHITE) dfstVisit(tmp, stack);
+	return 0;
+}
+
+Graph scc(Graph* g) {
+	Stack* vts = NULL;
+	dfs(g, vts);
+	Graph t = transpose(g);
+	dfst(&t, vts);
+	return t;
+}
+
+int displayNode(Vertex* v) {
+	if (!v) return UNDEFINED_VERTEX;
+	printf("Vertex %d (%lf; %lf)\n", v->point->id, v->point->x, v->point->y);
+	if (v->child) for (int i = 0; i < v->nChilds; i++) displayNode(v->child[i]);
+	return 0;
+}
+
+int displayTree(Graph* g) {
+	if (!g) return GRAPH_NULLPTR;
+	for (int i = 0; i < g->v; i++) if (g->adjlist[i].vertex->prev == NULL) {
+		displayNode(g->adjlist[i].vertex);
+		printf("\n\n\n");
+	}
+	return 0;
+}
+
+int decompose(Graph* g) {
+	if (!g) return GRAPH_NULLPTR;
+	Graph t = scc(g);
+	displayTree(&t);
+	return 0;
+
+}
 
 int dgenerate(Graph*g) {
 	if (!g) return GRAPH_NULLPTR;
@@ -184,11 +350,24 @@ int timing(Graph*g) {
 	puts("test");
 	return 0;
 }
+/*
+int displayNode(Vertex* node) {
+	if (!node) return NODE_NULLPTR;
+	for (int i = 0; i < )
+}
+
+int displaySCC(Graph* t) {
+	if (!t) return GRAPH_NULLPTR;
+	for (int i = 0; i < t->v; i++) {
+		if (!t->adjlist[i].vertex->prev) displayTree(t->adjlist[i].vertex);
+	}
+	return 0;
+}
 
 int decompose(Graph* g) {
 	if (!g) return GRAPH_NULLPTR;
 	Graph t = scc(g);
-	puts("Test");
+	displaySCC(&t);
 	return 0;
 }
 
@@ -202,6 +381,7 @@ int dfsVisit(AdjList* a, int* time) {
 	while (tmp) {
 		if (tmp->vertex->color == WHITE) {
 			tmp->vertex->prev = a->vertex;
+			insertChild(a->vertex, tmp->vertex);
 			dfsVisit(tmp, time);
 		}
 		tmp = tmp->next;
@@ -209,6 +389,14 @@ int dfsVisit(AdjList* a, int* time) {
 	a->vertex->color = BLACK;
 	(*time)++;
 	a->vertex->fTime = *time;
+	return 0;
+}
+
+int insertChild(Vertex* parent, Vertex* child) {
+	if (!parent) return PARENT_NULLPTR;
+	if (!child) return CHILD_NULLPTR;
+	parent->child = (Vertex**)realloc(parent->child, parent->nChilds + 1);
+	parent->child[parent->nChilds] = child;
 	return 0;
 }
 
@@ -231,6 +419,7 @@ int dfs(Graph* g) {
 		Vertex* v = g->adjlist[i].vertex;
 		v->color = WHITE;
 		v->prev = NULL;
+		v->child = NULL;
 	}
 	int time = 0;
 	for (int i = 0; i < g->v; i++) if (g->adjlist[i].vertex->color == WHITE) dfsVisit(&g->adjlist[i], &time);
@@ -259,6 +448,7 @@ int dfstVisit(AdjList* a) {
 	while (tmp) {
 		if (tmp->vertex->color == WHITE) {
 			tmp->vertex->prev = a->vertex;
+			insertChild(a->vertex, tmp->vertex);
 			dfstVisit(tmp);
 		}
 		tmp = tmp->next;
@@ -284,7 +474,7 @@ Graph scc(Graph* g) {
 	Graph t = transpose(g);
 	dfst(&t);
 	return t;
-}
+}*/
 
 int vertexIDSearch(Graph* g, int id) {
 	for (int i = 0; i < g->v; i++) if (g->adjlist[i].vertex->point->id == id) return i;
@@ -379,8 +569,6 @@ int getId(Graph* g) {
 }
 
 int dvertexRemove(Graph* g) {
-	double x, y;
-	int id;
 	//реализовать удаление как по координатам, таки по имени вершины
 	int m = dialog(removeVertexMenu, NRemoveVertexMenu);
 	if (!(rvfptr[m](g))) return 0;
@@ -400,7 +588,7 @@ AdjList* edgeSearch(Graph*g, int fid, int sid) {
 
 int edgeInsert(Graph* g, int fid, int sid) {
 	if (!g) return GRAPH_NULLPTR;
-	//if (edgeSearch(g, fid, sid) return EDGE_DUPLICATE; если мультиребра вне закона
+	if (edgeSearch(g, fid, sid)) return EDGE_DUPLICATE;
 	AdjList* a = (AdjList*)malloc(sizeof(AdjList));
 	int s = vertexIDSearch(g, sid);
 	if (s == -1) return FIRST_NOT_FOUND;
@@ -437,7 +625,7 @@ int vertexCordSearch(Graph* g, double x, double y) {
 int getDouble(double* t) {
 	int r = scanf("%lf",t);
 	printf("%d\n", r);
-	scanf("%c");
+	scanf("*%c");
 	return 0;
 }
 
