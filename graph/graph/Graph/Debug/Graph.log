@@ -1,6 +1,5 @@
 ﻿  Graph.cpp
-c:\users\troja\documents\github\labs\graph\graph\graph\graph.cpp(628): warning C4473: "scanf": передано недостаточно аргументов для строки формата
-  c:\users\troja\documents\github\labs\graph\graph\graph\graph.cpp(628): note: заполнители и их параметры ожидают переменное число аргументов в количестве 1, но было предоставлено 0
-  c:\users\troja\documents\github\labs\graph\graph\graph\graph.cpp(628): note: отсутствующий вариативный аргумент "1" требуется для строки форматирования "%c"
-c:\users\troja\documents\github\labs\graph\graph\graph\graph.cpp(823): warning C4101: d: неиспользованная локальная переменная
+c:\users\troja\documents\github\labs\graph\graph\graph\graph.cpp(667): warning C4474: "printf" : для строки формата передано слишком много аргументов
+  c:\users\troja\documents\github\labs\graph\graph\graph\graph.cpp(667): note: заполнители и их параметры ожидают переменное число аргументов в количестве 0, но было предоставлено 1
+c:\users\troja\documents\github\labs\graph\graph\graph\graph.cpp(834): warning C4101: d: неиспользованная локальная переменная
   Graph.vcxproj -> C:\Users\troja\Documents\GitHub\labs\graph\graph\Debug\Graph.exe

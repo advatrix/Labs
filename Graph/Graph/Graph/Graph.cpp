@@ -1,21 +1,12 @@
 ﻿/*
 
+переписать edgeSearch (там какая-то хрень с индексами)
+
 сделать нормальную структуру стека
-
-пофиксить выход из программы при завершении ручного создания графа
-
 
 сделать разложение на сильно связные компоненты
 
-
-
-при первом поиске в глубину вершины надо записывать в стек по времени f
-
 сделать нормальный getDouble
-сделать удаление графа из памяти
-
-
-
 
 координаты вещественые числа
 
@@ -182,6 +173,7 @@ AdjList* edgeSearch(Graph* g, int fid, int sid);
 Graph transpose(Graph*);
 //int dfsVisit(AdjList* a, int* time);
 int insertChild(Vertex* parent, Vertex* child);
+int delGraph(Graph* g);
 
 
 int(*mfptr[])(Graph*) = { NULL, dvertexInsert, dedgeInsert, dvertexRemove, decompose, display, dsave, timing, properties };
@@ -193,6 +185,24 @@ int(*rvfptr[])(Graph*) = { NULL, getCords, getId };
 
 
 */
+
+
+
+int delGraph(Graph* g) {
+	if (!g) return GRAPH_NULLPTR;
+	for (int i = 0; i < g->v; i++) {
+		AdjList* tmp = g->adjlist[i].next;
+		while (tmp) {
+			AdjList* next = tmp->next;
+			free(tmp);
+			tmp = next;
+		}
+		free(g->adjlist[i].vertex->point);
+		free(g->adjlist[i].vertex);
+	}
+	free(g->adjlist);
+	return 0;
+}
 
 Graph transpose(Graph* g) {
 	Graph t;
@@ -622,12 +632,6 @@ int vertexCordSearch(Graph* g, double x, double y) {
 	return NOT_FOUND;
 }
 
-int getDouble(double* t) {
-	int r = scanf("%lf",t);
-	printf("%d\n", r);
-	scanf("*%c");
-	return 0;
-}
 
 int vertexInsert(Graph* g, double x, double y, int id) {
 	if (!g) return GRAPH_NULLPTR;
@@ -636,13 +640,11 @@ int vertexInsert(Graph* g, double x, double y, int id) {
 	Point* p = (Point*)calloc(1, sizeof(Point));
 	p->x = x;
 	p->y = y;
-	g->v++;
 	p->id = id;
 	pointInsert(g, p);
+	g->v++;
 	return 0;
 }
-
-
 
 int dcreate(Graph* g) {
 	if (!g) return GRAPH_NULLPTR;
@@ -664,12 +666,23 @@ int dvertexInsert(Graph* g) {
 	getDouble(&x);
 	printf("Enter y: --> ");
 	getDouble(&y);
-	printf("Enter ID (for example, %d): --> ", g->v);
+	printf("Enter ID --> ", g->v);
 	getInt(&id);
 	rc = vertexInsert(g, x, y, id);
-	if (!rc) printf("Created a new vertex, id = %d", g->v);
 	printf("%s", insertVertexErrs[rc]);
 	return 0;
+}
+
+
+int getDouble(double* t) {
+	int r;
+	do {
+		r = scanf_s("%lf", t);
+		if (r == 1) return 0;
+		printf("Input is incorrect. You should enter a real number\n");
+		scanf_s("%*[^\n]");
+	} while (1);
+	return 1;
 }
 
 int getInt(int *t, int mode) {
@@ -736,7 +749,7 @@ int dload(Graph* g) {
 int pointInsert(Graph* g, Point* p) {
 	if (!g) return GRAPH_NULLPTR;
 	if (!p) return POINT_NULLPTR;
-	if (g->v) g->adjlist = (AdjList*)realloc(g->adjlist, g->v);
+	if (g->v) g->adjlist = (AdjList*)realloc(g->adjlist, sizeof(AdjList)*(g->v + 1));
 	else g->adjlist = (AdjList*)malloc(sizeof(AdjList));
 	Vertex* v = (Vertex*)calloc(1, sizeof(Vertex));
 	v->point = p;
@@ -823,5 +836,8 @@ int main() {
 	double d;
 	int rc;
 	while (rc = dialog(loadmsgs, NLoadMsgs)) if (!lfptr[rc](&g)) break;
+	while (rc = dialog(menu, NMenu)) mfptr[rc](&g);
+	delGraph(&g);
+	puts("Program finished");
 	return 0;
 }
