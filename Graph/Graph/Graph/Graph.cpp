@@ -1,5 +1,8 @@
 ﻿/*
 
+запихивать в стек не ссылки на просмотренные вершины, а их индексы. Тогда поскольку в транспонированном графе 
+порядок вершин в векторе сс такой же, в dfst тупо идет обращение к индексам
+
 переписать edgeSearch (там какая-то хрень с индексами)
 
 сделать нормальную структуру стека
@@ -52,7 +55,12 @@
 v
 e
 точки
+id
+x
+y
 ребра
+fid
+sid
 
 */
 #include "pch.h"
@@ -83,6 +91,8 @@ e
 #define PARENT_NULLPTR 1
 #define CHILD_NULLPTR 2
 #define NODE_NULLPTR 1
+#define EDGE_NOT_FOUND 4
+#define STACK_NULLPTR 2
 
 #define WHITE 0
 #define GRAY 1
@@ -103,11 +113,7 @@ struct Vertex {
 	Vertex* prev;
 	Vertex** child; //ссылка на массив потомков в дереве поиска
 	int nChilds; //количество потомков в дереве поиска
-};
-
-struct Edge {
-	int fid;
-	int sid;
+	int ind; //индекс вершины в векторе графа
 };
 
 struct AdjList {
@@ -205,7 +211,7 @@ int delGraph(Graph* g) {
 }
 
 Graph transpose(Graph* g) {
-	Graph t;
+	Graph t = { NULL, 0, 0};
 	for (int i = 0; i < g->v; i++) vertexInsert(&t, g->adjlist[i].vertex->point->x, g->adjlist[i].vertex->point->y, g->adjlist[i].vertex->point->id);
 	for (int i = 0; i < g->v; i++) {
 		AdjList* tmp = g->adjlist[i].next;
@@ -217,16 +223,17 @@ Graph transpose(Graph* g) {
 	return t;
 }
 
-int push(Stack* stack, AdjList* a) {
-	if (!a) return ADJLIST_NULLPTR;
+Stack* push(Stack* stack, AdjList* a) {
+	if (!a) return NULL;
+	if (!stack) return NULL;
 	Stack* tmp = (Stack*)malloc(sizeof(Stack));
 	tmp->vertex = a;
 	tmp->next = stack;
 	stack = tmp;
-	return 0;
+	return stack;
 }
 
-int dfsVisit(AdjList* a, Stack* stack, int* time) {
+int dfsVisit(Graph* g, AdjList* a, Stack** stack, int* time) {
 	if (!a) return ADJLIST_NULLPTR;
 	if (!time) return TIME_NULLPTR;
 	a->vertex->color = GRAY;
@@ -237,53 +244,55 @@ int dfsVisit(AdjList* a, Stack* stack, int* time) {
 		if (tmp->vertex->color == WHITE) {
 			tmp->vertex->prev = a->vertex;
 			insertChild(a->vertex, tmp->vertex);
-			dfsVisit(tmp, stack, time);
+			dfsVisit(g, &g->adjlist[tmp->vertex->ind], stack, time);
 		}
 		tmp = tmp->next;
 	}
 	a->vertex->color = BLACK;
 	(*time)++;
 	a->vertex->fTime = *time;
-	push(stack, a);
+	*stack = push(*stack, a);
 	return 0;
 }
 
-int dfs(Graph* g, Stack* stack) {
-	if (!g) return GRAPH_NULLPTR;
+
+Stack* dfs(Graph* g, Stack* stack) {
+	if (!g) return NULL;
+	if (!stack) return NULL;
 	for (int i = 0; i < g->v; i++) {
 		g->adjlist[i].vertex->color = WHITE;
 		g->adjlist[i].vertex->prev = NULL;
 		g->adjlist[i].vertex->child = NULL;
 	}
 	int time = 0;
-	for (int i = 0; i < g->v; i++) if (g->adjlist[i].vertex->color == WHITE) dfsVisit(&g->adjlist[i], stack, &time);
-	return 0;
+	for (int i = 0; i < g->v; i++) if (g->adjlist[i].vertex->color == WHITE) dfsVisit(g, &g->adjlist[i], &stack, &time);
+	return stack;
 }
 
-AdjList* pop(Stack* stack) {
+AdjList* pop(Stack** stack) {
 	if (!stack) return NULL;
 	/*Vertex* t = stack->vertex;
 	AdjList* tmp = stack;
 	stack = stack->next;
 	free(tmp);
 	return t;*/
-	AdjList* t = stack->vertex;
-	Stack* tmp = stack;
-	stack = stack->next;
-	free(tmp);
+	AdjList* t = (*stack)->vertex;
+	Stack* tmp = *stack;
+	*stack = (*stack)->next;
+//	free(tmp);
 	return t;
 }
 
 int insertChild(Vertex* p, Vertex* c) {
 	if (!p) return PARENT_NULLPTR;
 	if (!c) return CHILD_NULLPTR;
-	p->child = (Vertex**)realloc(p->child, p->nChilds);
+	p->child = (Vertex**)realloc(p->child, sizeof(Vertex*)*(p->nChilds + 1));
 	p->child[p->nChilds] = c;
 	p->nChilds++;
 	return 0;
 }
 
-int dfstVisit(AdjList* a, Stack* stack) {
+int dfstVisit(Graph* g, AdjList* a, Stack* stack) {
 	if (!a) return ADJLIST_NULLPTR;
 	a->vertex->color = GRAY;
 	AdjList* tmp = a;
@@ -291,7 +300,7 @@ int dfstVisit(AdjList* a, Stack* stack) {
 		if (tmp->vertex->color == WHITE) {
 			tmp->vertex->prev = a->vertex;
 			insertChild(a->vertex, tmp->vertex);
-			dfstVisit(tmp, stack);
+			dfstVisit(g, &g->adjlist[tmp->vertex->ind], stack);
 		}
 		tmp = tmp->next;
 	}
@@ -307,15 +316,15 @@ int dfst(Graph* g, Stack* stack) {
 		g->adjlist[i].vertex->child = NULL;
 	}
 	AdjList* tmp;
-	while (tmp = pop(stack)) if (tmp->vertex->color == WHITE) dfstVisit(tmp, stack);
+	while (tmp = pop(&stack)) if (tmp->vertex->color == WHITE) dfstVisit(g, tmp, stack);
 	return 0;
 }
 
 Graph scc(Graph* g) {
-	Stack* vts = NULL;
-	dfs(g, vts);
+	Stack vts = { NULL, NULL };
+	vts = *(dfs(g, &vts));
 	Graph t = transpose(g);
-	dfst(&t, vts);
+	dfst(&t, &vts);
 	return t;
 }
 
@@ -351,7 +360,11 @@ int dgenerate(Graph*g) {
 
 int properties(Graph* g) {
 	if (!g) return GRAPH_NULLPTR;
-	printf("%d vertices\n %d edges\n", g->v, g->e);
+	printf("%d vertices\n%d edges\n", g->v, g->e);
+	printf("ID\tX\tY\tInd\n");
+	for (int i = 0; i < g->v; i++)
+		printf("%d\t%lf\t%lf\t%d\n", g->adjlist[i].vertex->point->id, g->adjlist[i].vertex->point->x, g->adjlist[i].vertex->point->y,
+			g->adjlist[i].vertex->ind);
 	return 0;
 }
 
@@ -550,6 +563,7 @@ int vertexRemove(Graph* g, double* x, double* y, int* id) {
 	free(g->adjlist[ind].vertex->point);
 	free(g->adjlist[ind].vertex);
 	g->adjlist[ind] = g->adjlist[g->v - 1];
+	g->adjlist[ind].vertex->ind = ind;
 	g->v--;
 	g->adjlist = (AdjList*)realloc(g->adjlist, g->v - 1);
 	return 0;
@@ -587,7 +601,11 @@ int dvertexRemove(Graph* g) {
 
 AdjList* edgeSearch(Graph*g, int fid, int sid) {
 	if (!g) return NULL;
-	AdjList* tmp = g->adjlist[fid].next;
+	int f = vertexIDSearch(g, fid);
+	if (f == -1) return NULL;
+	int s = vertexIDSearch(g, sid);
+	if (s == -1) return NULL;
+	AdjList* tmp = g->adjlist[f].next;
 	while (tmp) {
 		if (tmp->vertex->point->id == sid) return tmp;
 		tmp = tmp->next;
@@ -740,7 +758,7 @@ char *getStr(int mode = 1) {
 int dload(Graph* g) {
 	if (!g) return GRAPH_NULLPTR;
 	puts("Enter file name:");
-	char* fname = getStr(0);
+	char* fname = getStr(1);
 	int rc = load(g, fname);
 	printf("%s\n", loaderrs[rc]);
 	return 0;
@@ -753,6 +771,7 @@ int pointInsert(Graph* g, Point* p) {
 	else g->adjlist = (AdjList*)malloc(sizeof(AdjList));
 	Vertex* v = (Vertex*)calloc(1, sizeof(Vertex));
 	v->point = p;
+	v->ind = g->v;
 	g->adjlist[g->v].next = NULL;
 	g->adjlist[g->v].vertex = v;
 	return 0;
@@ -767,12 +786,16 @@ int save(Graph* g, char* fname) {
 	fseek(fd, 0, SEEK_SET);
 	fwrite(&g->v, sizeof(int), 1, fd);
 	fwrite(&g->e, sizeof(int), 1, fd);
-	for (int i = 0; i < g->v; i++) fwrite(&g->adjlist[i].vertex->point, sizeof(Point), 1, fd);
+	for (int i = 0; i < g->v; i++) {
+		fwrite(&g->adjlist[i].vertex->point->id, sizeof(int), 1, fd);
+		fwrite(&g->adjlist[i].vertex->point->x, sizeof(double), 1, fd);
+		fwrite(&g->adjlist[i].vertex->point->y, sizeof(double), 1, fd);
+	}
 	for (int i = 0; i < g->v; i++) {
 		AdjList* adjtmp = g->adjlist[i].next;
 		while (adjtmp) {
-			Edge tmp = { i, adjtmp->vertex->point->id };
-			fwrite(&tmp, sizeof(Edge), 1, fd);
+			fwrite(&g->adjlist[i].vertex->point->id, sizeof(int), 1, fd); //fid
+			fwrite(&adjtmp->vertex->point->id, sizeof(int), 1, fd); //sid
 			adjtmp = adjtmp->next;
 		}
 	}
@@ -798,17 +821,22 @@ int load(Graph* g, char* fname) {
 		free(fname);
 		return LOADING_FAILURE;
 	}
-	fread(&g->v, sizeof(int), 1, fd);
-	fread(&g->e, sizeof(int), 1, fd);
-	for (int i = 0; i < g->v; i++) {
+	int v, e;
+	fread(&v, sizeof(int), 1, fd);
+	fread(&e, sizeof(int), 1, fd);
+	for (int i = 0; i < v; i++) {
 		Point* p = (Point*)malloc(sizeof(Point));
-		fread(p, sizeof(Point), 1, fd);
+		fread(&p->id, sizeof(int), 1, fd);
+		fread(&p->x, sizeof(double), 1, fd);
+		fread(&p->y, sizeof(double), 1, fd);
 		pointInsert(g, p);
+		g->v++;
 	}
-	for (int i = 0; i < g->e; i++) {
-		Edge tmp; //возможно тут надо её задавать маллоком, если будет ругань
-		fread(&tmp, sizeof(Edge), 1, fd);
-		edgeInsert(g, tmp.fid, tmp.sid);
+	for (int i = 0; i < e; i++) {
+		int fid, sid;
+		fread(&fid, sizeof(int), 1, fd);
+		fread(&sid, sizeof(int), 1, fd);
+		edgeInsert(g, fid, sid);
 	}
 	//for (int i = 0; i < g->v; i++) g->adjlist[i].vertex->point->id = i; это не нужно, потому что у нас id это ключ в просматриваемой таблице,
 	//а не индекс вершины в массиве вершин
