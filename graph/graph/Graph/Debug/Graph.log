@@ -1,5 +1,7 @@
 ﻿  Graph.cpp
-c:\users\troja\documents\github\labs\graph\graph\graph\graph.cpp(684): warning C4474: "printf" : для строки формата передано слишком много аргументов
-  c:\users\troja\documents\github\labs\graph\graph\graph\graph.cpp(684): note: заполнители и их параметры ожидают переменное число аргументов в количестве 0, но было предоставлено 1
-c:\users\troja\documents\github\labs\graph\graph\graph\graph.cpp(861): warning C4101: d: неиспользованная локальная переменная
+c:\users\troja\documents\github\labs\graph\graph\graph\graph.cpp(354): warning C4244: аргумент: преобразование "time_t" в "unsigned int", возможна потеря данных
+c:\users\troja\documents\github\labs\graph\graph\graph\graph.cpp(394): warning C4244: аргумент: преобразование "time_t" в "unsigned int", возможна потеря данных
+c:\users\troja\documents\github\labs\graph\graph\graph\graph.cpp(595): warning C4474: "printf" : для строки формата передано слишком много аргументов
+  c:\users\troja\documents\github\labs\graph\graph\graph\graph.cpp(595): note: заполнители и их параметры ожидают переменное число аргументов в количестве 0, но было предоставлено 1
+c:\users\troja\documents\github\labs\graph\graph\graph\graph.cpp(779): warning C4101: d: неиспользованная локальная переменная
   Graph.vcxproj -> C:\Users\troja\Documents\GitHub\labs\graph\graph\Debug\Graph.exe
