@@ -136,7 +136,7 @@ const char* createmsgs[] = { "0. Quit", "1. Add vertex", "2. Add edge" };
 const char* insertVertexErrs[] = { "Ok", "Graph nullptr", "Duplicate point", "Duplicate ID" };
 const char* insertEdgeErrs[] = { "Ok", "Graph nullptr", "First vertex not found", "Second vertex not found" };
 const char* removeVertexMenu[] = { "0. Quit", "1. Enter coordinates", "2. Enter id" };
-const char* removeVertexErrs[] = { "Ok", "Graph nullptr", "Vertex not found", "Undefined vertex" };
+const char* removeVertexErrs[] = { "Ok", "Graph nullptr", "Vertex not found", "Undefined vertex", "Cords and ID conflict" };
 const char* saveerrs[] = { "Ok", "Graph nullptr", "Filename nullptr", "Saving error" };
 const char* generr[] = { "Ok", "Graph nullptr", "Incorrect number of vertices", "Incorrect number of edges", "Too many edges for this number of vertices" };
 
@@ -360,7 +360,7 @@ int decompose(Graph* g) {
 
 int maxEdgeN(int v) {
 	if (v < 0) return 0;
-	return v + v * (v - 1);
+	return v * v;
 }
 
 
@@ -462,7 +462,11 @@ int vertexRemove(Graph* g, double* x, double* y, int* id) {
 	if (!id) {
 		if (!x || !y) return UNDEFINED_VERTEX;
 		ind = vertexCordSearch(g, *x, *y);
-	} else ind = vertexIDSearch(g, *id);
+	}
+	else {
+		ind = vertexIDSearch(g, *id);
+		
+	}
 	if (ind == -1) return VERTEX_NOT_FOUND;
 	AdjList* tmp = g->adjlist[ind].next, *next, *prev;
 	while (tmp) {
@@ -547,9 +551,9 @@ int edgeInsert(Graph* g, int fid, int sid) {
 	if (edgeSearch(g, fid, sid)) return EDGE_DUPLICATE;
 	AdjList* a = (AdjList*)malloc(sizeof(AdjList)); 
 	int s = vertexIDSearch(g, sid);
-	if (s == -1) return FIRST_NOT_FOUND;
+	if (s == -1) return SECOND_NOT_FOUND;
 	int f = vertexIDSearch(g, fid);
-	if (f == -1) return SECOND_NOT_FOUND;
+	if (f == -1) return FIRST_NOT_FOUND;
 	a->vertex = g->adjlist[s].vertex;
 	a->next = g->adjlist[f].next;
 	g->adjlist[f].next = a;

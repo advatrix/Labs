@@ -244,8 +244,460 @@ TEST(vertexNullPtr, displayNode) {
 	ASSERT_EQ(displayNode(NULL), UNDEFINED_VERTEX);
 }
 
+TEST(Zero, maxEdgeN) {
+	ASSERT_EQ(maxEdgeN(0), 0);
+}
+
+TEST(One, maxEdgeN) {
+	ASSERT_EQ(maxEdgeN(1), 1);
+}
+
+TEST(Two, maxEdheN) {
+	ASSERT_EQ(maxEdgeN(2), 4);
+}
+
+TEST(Negative, maxEdgeN) {
+	ASSERT_EQ(maxEdgeN(-655), 0);
+}
+
+TEST(Positive, maxEdgeN) {
+	ASSERT_EQ(maxEdgeN(291), 84681);
+}
+
+TEST(Negative, generate) {
+	Graph g = { 0, 0, NULL };
+	ASSERT_EQ(generate(&g, -15, 68), INCORRECT_VERTICES_NUMBER);
+}
+
+TEST(NegativeEdgeNumber, generate) {
+	Graph g = { 0, 0, NULL };
+	ASSERT_EQ(generate(&g, 17, -96), INCORRECT_EDGES_NUMBER);
+}
+
+TEST(tooManyEdges, generate) {
+	Graph g = { 0, 0, NULL };
+	ASSERT_EQ(generate(&g, 26, 700), TOO_MANY_EDGES);
+}
+
+TEST(lonelyVertex, generate) {
+	Graph g = { 0, 0, NULL };
+	generate(&g, 1, 0);
+	ASSERT_EQ(g.v, 1);
+	ASSERT_EQ(g.e, 0);
+	ASSERT_TRUE(g.adjlist);
+	delGraph(&g);
+}
+
+TEST(emptyGraph, generate) {
+	Graph g = { 0, 0, NULL };
+	generate(&g, 0, 0);
+	ASSERT_EQ(g.v, 0);
+	ASSERT_EQ(g.e, 0);
+	ASSERT_FALSE(g.adjlist);
+	delGraph(&g);
+}
+
+TEST(lonelyEdge, generate) {
+	Graph g = { 0, 0, NULL };
+	ASSERT_EQ(generate(&g, 0, 1), INCORRECT_VERTICES_NUMBER);
+}
+
+TEST(graph100, generate) {
+	Graph g = { 0, 0, NULL };
+	generate(&g, 100, 100);
+	ASSERT_EQ(g.v, 100);
+	ASSERT_EQ(g.e, 100);
+	ASSERT_TRUE(g.adjlist);
+	delGraph(&g);
+}
+
+TEST(randomGraph, generate) {
+	Graph g = { 0, 0, NULL };
+	srand(time(NULL));
+	int v = rand()/100;
+	int e = maxEdgeN(v)/10;
+	generate(&g, v, e);
+	ASSERT_EQ(g.v, v);
+	ASSERT_EQ(g.e, e);
+	ASSERT_TRUE(g.adjlist);
+	delGraph(&g);
+}
+
+TEST(emptyGraph, vertexIDSearch) {
+	Graph g = { 0, 0, NULL };
+	ASSERT_EQ(vertexIDSearch(&g, 12), NOT_FOUND);
+}
+
+TEST(lonelyVertex, lonelyVertexIDSearch) {
+	Graph g = { 0, 0, NULL };
+	vertexInsert(&g, 17, 65.44, 7);
+	ASSERT_EQ(vertexIDSearch(&g, 7), 0);
+	delGraph(&g);
+}
+
+TEST(lonelyVertex, absentVertexIDSearch) {
+	Graph g = { 0, 0, NULL };
+	vertexInsert(&g, 17, 65.44, 7);
+	ASSERT_EQ(vertexIDSearch(&g, 14), NOT_FOUND);
+	delGraph(&g);
+}
+
+TEST(graph100, vertexIDSearch) {
+	Graph g = { 0, 0, NULL };
+	generate(&g, 100, 100);
+	ASSERT_EQ(vertexIDSearch(&g, 67), 67);
+	delGraph(&g);
+}
+
+TEST(emptyGraph, cordVertexRemove) {
+	Graph g = { 0, 0, NULL };
+	double x = 17.7965;
+	double y = 4;
+	ASSERT_EQ(vertexRemove(&g, &x, &y, NULL), VERTEX_NOT_FOUND);
+}
+
+TEST(undefinedVertex, vertexRemove) {
+	Graph g = { 0, 0, NULL };
+	ASSERT_EQ(vertexRemove(&g, NULL, NULL, NULL), UNDEFINED_VERTEX);
+}
+
+TEST(emptyGraph, IDVertexRemove) {
+	Graph g = { 0, 0, NULL };
+	int id = 16;
+	ASSERT_EQ(vertexRemove(&g, NULL, NULL, &id), VERTEX_NOT_FOUND);
+}
+
+TEST(lonelyVertex, cordVertexRemove) {
+	Graph g = { 0, 0, NULL };
+	double x = 17.99;
+	double y = 86;
+	int id = 72;
+	vertexInsert(&g, x, y, id);
+	vertexRemove(&g, &x, &y, NULL);
+	ASSERT_EQ(g.v, 0);
+	ASSERT_FALSE(g.adjlist);
+}
+
+TEST(lonelyVertex, IDVertexRemove) {
+	Graph g = { 0, 0, NULL };
+	double x = 17.99;
+	double y = 86;
+	int id = 72;
+	vertexInsert(&g, x, y, id);
+	vertexRemove(&g, NULL, NULL, &id);
+	ASSERT_EQ(g.v, 0);
+	ASSERT_FALSE(g.adjlist);
+}
+
+TEST(lonelyVertex, IDVertexRemoveAbsent) {
+	Graph g = { 0, 0, NULL };
+	double x = 17.99;
+	double y = 86;
+	int id = 72;
+	vertexInsert(&g, x, y, 86);
+	ASSERT_EQ(vertexRemove(&g, NULL, NULL, &id), VERTEX_NOT_FOUND);
+	ASSERT_EQ(g.v, 1);
+	ASSERT_TRUE(g.adjlist);
+	delGraph(&g);
+}
+
+TEST(lonelyVertex, cordVertexRemoveAbsent) {
+	Graph g = { 0, 0, NULL };
+	double x = 17.99;
+	double y = 86;
+	int id = 72;
+	vertexInsert(&g, 19, 66, id);
+	ASSERT_EQ(vertexRemove(&g, &x, &y, NULL), VERTEX_NOT_FOUND);
+	ASSERT_EQ(g.v, 1);
+	ASSERT_TRUE(g.adjlist);
+	delGraph(&g);
+}
+
+TEST(GraphNullPtr, edgeSearch) {
+	ASSERT_TRUE(edgeSearch(NULL, 15, 66) == NULL);
+}
+
+TEST(lonelyVertex, edgeSearch) {
+	Graph g = { 0, 0, NULL };
+	vertexInsert(&g, 19, 64, 5);
+	ASSERT_TRUE(edgeSearch(&g, 5, 0) == NULL);
+}
+
+TEST(graph1, edgeSearch) {
+	Graph g = { 0, 0, NULL };
+	char* fname = makeStr("file");
+	load(&g, fname);
+	AdjList* tmp = edgeSearch(&g, 2, 5);
+	ASSERT_EQ(tmp->vertex->point->id, 5);
+	delGraph(&g);
+}
+
+TEST(graph1, AbsentSid1EdgeSearch) {
+	Graph g = { 0, 0, NULL };
+	char* fname = makeStr("file");
+	load(&g, fname);
+	ASSERT_TRUE(edgeSearch(&g, 1, 19) == NULL);
+	delGraph(&g);
+}
+
+TEST(graph1, AbsentSid2EdgeSearch) {
+	Graph g = { 0, 0, NULL };
+	char* fname = makeStr("file");
+	load(&g, fname);
+	ASSERT_TRUE(edgeSearch(&g, 1, 8) == NULL);
+	delGraph(&g);
+}
+
+TEST(graph1, AbsentFid1EdgeSearch) {
+	Graph g = { 0, 0, NULL };
+	char* fname = makeStr("file");
+	load(&g, fname);
+	ASSERT_TRUE(edgeSearch(&g, 9, 1) == NULL);
+	delGraph(&g);
+}
 
 
+TEST(graph1, AbsentFid2EdgeSearch) {
+	Graph g = { 0, 0, NULL };
+	char* fname = makeStr("file");
+	load(&g, fname);
+	ASSERT_TRUE(edgeSearch(&g, 2, 1) == NULL);
+	delGraph(&g);
+}
+
+TEST(graph100, IDVertexRemove) {
+	Graph g = { 0, 0, NULL };
+	generate(&g, 100, 100);
+	int id = 17;
+	vertexRemove(&g, NULL, NULL, &id);
+	ASSERT_EQ(g.v, 99);
+	ASSERT_EQ(g.adjlist[17].vertex->point->id, 99);
+	delGraph(&g);
+}
+
+TEST(emptyGraph, edgeInsert) {
+	Graph g = { 0, 0, NULL };
+	ASSERT_EQ(edgeInsert(&g, 0, 0), SECOND_NOT_FOUND);
+}
+
+TEST(lonelyVertex, edgeInsert1) {
+	Graph g = { 0, 0, NULL };
+	vertexInsert(&g, 15, 16, 4);
+	ASSERT_EQ(edgeInsert(&g, 4, 0), SECOND_NOT_FOUND);
+}
+
+TEST(lonelyVertex, edgeInsert2) {
+	Graph g = { 0, 0, NULL };
+	vertexInsert(&g, 19, 64, 8);
+	ASSERT_EQ(edgeInsert(&g, 0, 8), FIRST_NOT_FOUND);
+}
+
+TEST(graph1, AbsentFidEdgeInsert) {
+	Graph g = { 0, 0, NULL };
+	char* fname = makeStr("file");
+	load(&g, fname);
+	ASSERT_EQ(edgeInsert(&g, 90, 2), FIRST_NOT_FOUND);
+	delGraph(&g);
+}
+
+TEST(graph1, AbsentSidEdgeInsert) {
+	Graph g = { 0, 0, NULL };
+	char* fname = makeStr("file");
+	load(&g, fname);
+	ASSERT_EQ(edgeInsert(&g, 2, 44), SECOND_NOT_FOUND);
+	delGraph(&g);
+}
+
+TEST(graph1, DuplicateEdgeInsert) {
+	Graph g = { 0, 0, NULL };
+	char* fname = makeStr("file");
+	load(&g, fname);
+	ASSERT_EQ(edgeInsert(&g, 2, 6), EDGE_DUPLICATE);
+	delGraph(&g);
+}
+
+TEST(graph1, EdgeInsert) {
+	Graph g = { 0, 0, NULL };
+	char* fname = makeStr("file");
+	load(&g, fname);
+	edgeInsert(&g, 1, 4);
+	ASSERT_EQ(g.e, 15);
+	ASSERT_TRUE(g.adjlist[0].next->vertex->point->id == 4);
+	delGraph(&g);
+}
+
+TEST(graph1, LoopInsert) {
+	Graph g = { 0, 0, NULL };
+	char* fname = makeStr("file");
+	load(&g, fname);
+	edgeInsert(&g, 1, 1);
+	ASSERT_EQ(g.e, 15);
+	ASSERT_TRUE(g.adjlist[0].next->vertex->point->id == 1);
+	delGraph(&g);
+}
+
+TEST(emptyGraph, vertexCordSearch) {
+	Graph g = { 0, 0, NULL };
+	ASSERT_EQ(vertexCordSearch(&g, 0, 0), NOT_FOUND);
+}
+
+TEST(graph1, absentXYVertexCordSearch) {
+	Graph g = { 0, 0, NULL };
+	char* fname = makeStr("file");
+	load(&g, fname);
+	ASSERT_EQ(vertexCordSearch(&g, 9.5, 9.6), NOT_FOUND);
+	delGraph(&g);
+}
+
+TEST(graph1, absentYVertexCordSearch) {
+	Graph g = { 0, 0, NULL };
+	char* fname = makeStr("file");
+	load(&g, fname);
+	ASSERT_EQ(vertexCordSearch(&g, 71, 78), NOT_FOUND);
+	delGraph(&g);
+}
+
+TEST(graph1, absentXVertexCordSearch) {
+	Graph g = { 0, 0, NULL };
+	char* fname = makeStr("file");
+	load(&g, fname);
+	ASSERT_EQ(vertexCordSearch(&g, 78, 12), NOT_FOUND);
+	delGraph(&g);
+}
+
+TEST(graph1, VertexCordSearch) {
+	Graph g = { 0, 0, NULL };
+	char* fname = makeStr("file");
+	load(&g, fname);
+	ASSERT_EQ(vertexCordSearch(&g, 71, 12), 2);
+	delGraph(&g);
+}
+
+TEST(emptyGraph, vertexInsert) {
+	Graph g = { 0, 0, NULL };
+	vertexInsert(&g, 17, 23, 55);
+	ASSERT_EQ(g.v, 1);
+	ASSERT_TRUE(g.adjlist);
+	ASSERT_EQ(g.adjlist[0].vertex->point->id, 55);
+	ASSERT_EQ(g.adjlist[0].vertex->point->x, 17);
+	ASSERT_EQ(g.adjlist[0].vertex->point->y, 23);
+}
+
+TEST(graph1, duplicatePointVertexInsert) {
+	Graph g = { 0, 0, NULL };
+	load(&g, makeStr("file"));
+	ASSERT_EQ(vertexInsert(&g, 71, 12, 99), DUPLICATE_POINT);
+	delGraph(&g);
+}
+
+TEST(graph1, duplicateIDVertexInsert) {
+	Graph g = { 0, 0, NULL };
+	load(&g, makeStr("file"));
+	ASSERT_EQ(vertexInsert(&g, 72, 13, 3), DUPLICATE_ID);
+	delGraph(&g);
+}
+
+TEST(graph1, vertexInsert) {
+	Graph g = { 0, 0, NULL };
+	load(&g, makeStr("file"));
+	vertexInsert(&g, 72, 13, 20);
+	ASSERT_EQ(g.v, 9);
+	ASSERT_EQ(g.adjlist[8].vertex->point->id, 20);
+	ASSERT_EQ(g.adjlist[8].vertex->point->x, 72);
+	ASSERT_EQ(g.adjlist[8].vertex->point->y, 13);
+	delGraph(&g);
+}
+
+TEST(GraphNullPtr, pointInsert) {
+	ASSERT_EQ(pointInsert(NULL, NULL), GRAPH_NULLPTR);
+}
+
+TEST(PointNullPtr, pointInsert) {
+	Graph g = { 0, 0, NULL };
+	ASSERT_EQ(pointInsert(&g, NULL), POINT_NULLPTR);
+}
+
+TEST(emptyGraph, pointInsert) {
+	Graph g = { 0, 0, NULL };
+	Point *p = (Point*)calloc(1, sizeof(Point));
+	pointInsert(&g, p);
+	ASSERT_TRUE(g.adjlist);
+	ASSERT_TRUE(g.adjlist[0].vertex->point == p);
+	delGraph(&g);
+}
+
+TEST(graph1, pointInsert) {
+	Graph g = { 0, 0, NULL };
+	Point *p = (Point*)calloc(1, sizeof(Point));
+	load(&g, makeStr("file"));
+	pointInsert(&g, p);
+	ASSERT_TRUE(g.adjlist[8].vertex->point == p);
+	delGraph(&g);
+}
+
+TEST(GraphNullPtr, save) {
+	ASSERT_EQ(save(NULL, NULL), GRAPH_NULLPTR);
+}
+
+TEST(FileNameNullPtr, save) {
+	Graph g = { 0, 0, NULL };
+	ASSERT_EQ(save(&g, NULL), FNAME_NULLPTR);
+}
+
+TEST(graph100, save) {
+	Graph g = { 0, 0, NULL };
+	generate(&g, 100, 100);
+	save(&g, makeStr("tmp"));
+	Graph n = { 0, 0, NULL };
+	load(&n, makeStr("tmp"));
+	for (int i = 0; i < 100; i++) {
+		ASSERT_EQ(g.adjlist[i].vertex->point->id, n.adjlist[i].vertex->point->id);
+		ASSERT_EQ(g.adjlist[i].vertex->point->x, n.adjlist[i].vertex->point->x);
+		ASSERT_EQ(g.adjlist[i].vertex->point->y, n.adjlist[i].vertex->point->y);
+	}
+	delGraph(&g);
+	delGraph(&n);
+}
+
+TEST(GraphNullPtr, load) {
+	ASSERT_EQ(load(NULL, NULL), GRAPH_NULLPTR);
+}
+
+TEST(FileNameNullPtr, load) {
+	Graph g = { 0, 0, NULL };
+	ASSERT_EQ(load(&g, NULL), FNAME_NULLPTR);
+}
+
+TEST(graph100, load) {
+	Graph g = { 0, 0, NULL };
+	load(&g, makeStr("tmp"));
+	ASSERT_EQ(g.e, 100);
+	ASSERT_EQ(g.v, 100);
+	delGraph(&g);
+}
+
+TEST(graph1, load) {
+	Graph g = { 0, 0, NULL };
+	load(&g, makeStr("file"));
+	ASSERT_EQ(g.e, 14);
+	ASSERT_EQ(g.v, 8);
+	ASSERT_EQ(g.adjlist[0].next->vertex->point->id, 2);
+	delGraph(&g);
+}
+
+TEST(newFile, load) {
+	Graph g = { 0, 0, NULL };
+	ASSERT_EQ(load(&g, makeStr("phantom")), LOADING_FAILURE);
+}
+
+TEST(emptyGraph, load) {
+	Graph g = { 0, 0, NULL };
+	load(&g, makeStr("empty"));
+	ASSERT_EQ(g.v, 0);
+	ASSERT_EQ(g.e, 0);
+	ASSERT_TRUE(g.adjlist == NULL);
+}
+ 
 int _tmain(int argc, _TCHAR* argv[]) {
 	::testing::InitGoogleTest(&argc, argv);
 	return RUN_ALL_TESTS();
