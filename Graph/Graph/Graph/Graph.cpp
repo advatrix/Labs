@@ -220,8 +220,10 @@ int push(Stack** stack, AdjList* a) {
 }
 
 int dfsVisit(Graph* g, AdjList* a, Stack** stack, int* time) {
+	if (!g) return GRAPH_NULLPTR;
 	if (!a) return ADJLIST_NULLPTR;
 	if (!time) return TIME_NULLPTR;
+	if (!stack) return STACK_NULLPTR;
 	a->vertex->color = GRAY;
 	a->vertex->dTime = *time;
 	(*time)++;
@@ -279,6 +281,7 @@ int insertChild(Vertex* p, Vertex* c) {
 }
 
 int dfstVisit(Graph* g, AdjList* a) {
+	if (!g) return GRAPH_NULLPTR;
 	if (!a) return ADJLIST_NULLPTR;
 	a->vertex->color = GRAY;
 	AdjList* tmp = a->next;
@@ -296,6 +299,7 @@ int dfstVisit(Graph* g, AdjList* a) {
 
 int dfst(Graph* g, Stack* stack) {
 	if (!g) return GRAPH_NULLPTR;
+	if (!stack) return STACK_NULLPTR;
 	for (int i = 0; i < g->v; i++) {
 		g->adjlist[i].vertex->color = WHITE;
 		g->adjlist[i].vertex->prev = NULL;
@@ -306,12 +310,26 @@ int dfst(Graph* g, Stack* stack) {
 	return 0;
 }
 
+int killChildren(Graph * g) {
+	if (!g) return GRAPH_NULLPTR;
+	for (int i = 0; i < g->v; i++) {
+		if (g->adjlist[i].vertex->child) {
+			free(g->adjlist[i].vertex->child);
+			g->adjlist[i].vertex->child = NULL;
+			g->adjlist[i].vertex->nChilds = 0;
+			g->adjlist[i].vertex->prev = NULL;
+		}
+	}
+	return 0;
+}
+
 Graph scc(Graph* g) {
 	Stack* vts = (Stack*)malloc(sizeof(Stack));
 	*vts = { -1, NULL };
 	dfs(g, vts);
 	Graph t = transpose(g);
 	dfst(&t, vts);
+//	killChildren(g);
 	return t;
 }
 
@@ -336,12 +354,13 @@ int decompose(Graph* g) {
 	Graph t = scc(g);
 	displayTree(&t);
 	delGraph(&t);
+	killChildren(g);
 	return 0;
 }
 
 int maxEdgeN(int v) {
 	if (v < 0) return 0;
-	return v * (v - 1) / 2;
+	return v + v * (v - 1);
 }
 
 
@@ -393,20 +412,20 @@ int timing(Graph*g) {
 	if (!g) return GRAPH_NULLPTR;
 	srand(time(NULL));
 	clock_t first, last;
-	int n = 1;
+	int n = 0;
 	while (n++ < 10) {
 		Graph t = { 0, 0, NULL };
 		first = clock();
-		generate(g, n * 10000, n * 5000);
+		generate(&t, n * n * 50, n * n * 250);
 		last = clock();
-		printf("Test #%d, %d vertices, %d edges, time = %d\n", n, n * 10000, n * 5000, last - first);
+		printf("Test #%d, %d vertices, %d edges, time = %d\n", n, n * n * 50, n *n * 250, last - first);
 		first = clock();
 		Graph p = scc(&t);
+		last = clock();
 		int k = 0;
 		for (int i = 0; i < p.v; i++) if (p.adjlist[i].vertex->prev == NULL) k++;
-		last = clock();
-		printf("%d\n", p.v);
-		printf("%d SCC, time = %d\n\n", k, last - first);
+		printf("%d strongly connected components, ", k);
+		printf("SCC time = %d\n\n", last - first);
 		delGraph(&p);
 		delGraph(&t);
 	}
@@ -502,6 +521,7 @@ int getId(Graph* g) {
 }
 
 int dvertexRemove(Graph* g) {
+	if (!g) return GRAPH_NULLPTR;
 	int m = dialog(removeVertexMenu, NRemoveVertexMenu);
 	if (!(rvfptr[m](g))) return 0;
 	return 0;
@@ -592,7 +612,7 @@ int dvertexInsert(Graph* g) {
 	getDouble(&x);
 	printf("Enter y: --> ");
 	getDouble(&y);
-	printf("Enter ID --> ", g->v);
+	printf("Enter ID --> ");
 	getInt(&id);
 	rc = vertexInsert(g, x, y, id);
 	printf("%s\n", insertVertexErrs[rc]);
@@ -713,6 +733,7 @@ int save(Graph* g, char* fname) {
 }
 
 int dsave(Graph* g) {
+	if (!g) return GRAPH_NULLPTR;
 	printf("Enter file name: --> ");
 	char* fname = getStr(1);
 	int rc = save(g, fname);
@@ -773,7 +794,7 @@ int graphMemTest() {
 	return 0;
 }
 
-
+/*
 int main() {
 	Graph g = { NULL, 0, 0 };
 	double d;
@@ -784,4 +805,4 @@ int main() {
 	//graphMemTest();
 	puts("Program finished");
 	return 0;
-}
+}*/
