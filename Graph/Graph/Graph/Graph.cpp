@@ -1,62 +1,4 @@
-﻿/*
-
-куда утекает память???????????????????????????????????????????????????????????????????????????????????????????
-
-сделать нормальный getDouble
-
-координаты вещественые числа
-
-вывод графа в виде списков смежности
-
-а у нас может быть мультиграф??? - нет
-у нас могут быть петли??? - да
-
-1. Написать функцию считывания вещественных чисел (getDouble (double* t));
-2. Создание графа:
-- загрузка из файла
-- задать вручную
-- рандомная генерация
-
-
-3. процесс работы
-
-вывод возможностей загрузки графа
-1. Из файла
-2. Сгенерировать
-	входные данные:
-		количество вершин
-		количество ребер
-3. Вручную
-	- ручная вставка вершин и ребер в граф
-
-
-Меню:
-0. Выход
-1. Добавить вершину
-2. Добавить ребро
-3. Удалить вершину (а удалять просто ребро не надо???)
-4. Разложить на сильно связные компоненты
-5. Вывод графа (в виде списка смежности)
-6. Сохранить граф в файл
-	- ввести имя файла
-7. Таймирование разложения (hmmmmmmm)
-
-файл должен быть отвязан от графа
-код ошибки определяется через define
-
-структура файла:
-v
-e
-точки
-id
-x
-y
-ребра
-fid
-sid
-
-*/
-#include "pch.h"
+﻿#include "pch.h"
 #include <stdio.h>
 #include <malloc.h>
 #include <stdlib.h>
@@ -90,11 +32,9 @@ sid
 #define INCORRECT_EDGES_NUMBER 3
 #define TOO_MANY_EDGES 4
 
-
 #define WHITE 0
 #define GRAY 1
 #define BLACK 2
-
 
 struct Point {
 	double x;
@@ -109,7 +49,7 @@ struct Vertex {
 	int fTime;
 	Vertex* prev;
 	Vertex** child;
-	int nChilds;
+	int nCh;
 	int ind; 
 };
 
@@ -274,9 +214,9 @@ AdjList* pop(Graph* g, Stack** stack) {
 int insertChild(Vertex* p, Vertex* c) {
 	if (!p) return PARENT_NULLPTR;
 	if (!c) return CHILD_NULLPTR;
-	p->child = (Vertex**)realloc(p->child, sizeof(Vertex*)*(p->nChilds + 1));
-	p->child[p->nChilds] = c;
-	p->nChilds++;
+	p->child = (Vertex**)realloc(p->child, sizeof(Vertex*)*(p->nCh + 1));
+	p->child[p->nCh] = c;
+	p->nCh++;
 	return 0;
 }
 
@@ -316,7 +256,7 @@ int killChildren(Graph * g) {
 		if (g->adjlist[i].vertex->child) {
 			free(g->adjlist[i].vertex->child);
 			g->adjlist[i].vertex->child = NULL;
-			g->adjlist[i].vertex->nChilds = 0;
+			g->adjlist[i].vertex->nCh = 0;
 			g->adjlist[i].vertex->prev = NULL;
 		}
 	}
@@ -329,14 +269,13 @@ Graph scc(Graph* g) {
 	dfs(g, vts);
 	Graph t = transpose(g);
 	dfst(&t, vts);
-//	killChildren(g);
 	return t;
 }
 
 int displayNode(Vertex* v) {
 	if (!v) return UNDEFINED_VERTEX;
 	printf("Vertex %d (%lf; %lf)\n", v->point->id, v->point->x, v->point->y);
-	if (v->child) for (int i = 0; i < v->nChilds; i++) displayNode(v->child[i]);
+	if (v->child) for (int i = 0; i < v->nCh; i++) displayNode(v->child[i]);
 	return 0;
 }
 
@@ -362,7 +301,6 @@ int maxEdgeN(int v) {
 	if (v < 0) return 0;
 	return v * v;
 }
-
 
 int generate(Graph* g, int v, int e) {
 	if (!g) return GRAPH_NULLPTR;
@@ -424,8 +362,7 @@ int timing(Graph*g) {
 		last = clock();
 		int k = 0;
 		for (int i = 0; i < p.v; i++) if (p.adjlist[i].vertex->prev == NULL) k++;
-		printf("%d strongly connected components, ", k);
-		printf("SCC time = %d\n\n", last - first);
+		printf("%d strongly connected components, SCC time = %d\n\n", k, last - first);
 		delGraph(&p);
 		delGraph(&t);
 	}
@@ -463,10 +400,7 @@ int vertexRemove(Graph* g, double* x, double* y, int* id) {
 		if (!x || !y) return UNDEFINED_VERTEX;
 		ind = vertexCordSearch(g, *x, *y);
 	}
-	else {
-		ind = vertexIDSearch(g, *id);
-		
-	}
+	else ind = vertexIDSearch(g, *id);
 	if (ind == -1) return VERTEX_NOT_FOUND;
 	AdjList* tmp = g->adjlist[ind].next, *next, *prev;
 	while (tmp) {
@@ -531,11 +465,28 @@ int dvertexRemove(Graph* g) {
 	return 0;
 }
 
+int edgeSearch2(Graph* g, int fid, int sid, AdjList** ans) {
+	if (!g) return GRAPH_NULLPTR;
+	int f = vertexIDSearch(g, fid);
+	if (f == -1) return FIRST_NOT_FOUND;
+	int s = vertexIDSearch(g, fid);
+	if (s == -1) return SECOND_NOT_FOUND;
+	AdjList* tmp = g->adjlist[f].next;
+	while (tmp) {
+		if (tmp->vertex->point->id == sid) {
+			*ans = tmp;
+			return 0;
+		}
+		tmp = tmp->next;
+	}
+	return NOT_FOUND;
+}
+
 AdjList* edgeSearch(Graph*g, int fid, int sid) {
 	if (!g) return NULL;
 	int f = vertexIDSearch(g, fid);
 	if (f == -1) return NULL;
-	int s = vertexIDSearch(g, sid);
+	int s = vertexIDSearch(g, fid);
 	if (s == -1) return NULL;
 	AdjList* tmp = g->adjlist[f].next;
 	while (tmp) {
@@ -544,7 +495,6 @@ AdjList* edgeSearch(Graph*g, int fid, int sid) {
 	}
 	return tmp;
 }
-
 
 int edgeInsert(Graph* g, int fid, int sid) {
 	if (!g) return GRAPH_NULLPTR;
@@ -574,14 +524,10 @@ int dedgeInsert(Graph *g) {
 	return 0;
 }
 
-
 int vertexCordSearch(Graph* g, double x, double y) {
-	for (int i = 0; i < g->v; i++) {
-		if (g->adjlist[i].vertex->point->x == x && g->adjlist[i].vertex->point->y == y) return i;
-	}
+	for (int i = 0; i < g->v; i++) if (g->adjlist[i].vertex->point->x == x && g->adjlist[i].vertex->point->y == y) return i;
 	return NOT_FOUND;
 }
-
 
 int vertexInsert(Graph* g, double x, double y, int id) {
 	if (!g) return GRAPH_NULLPTR;
@@ -599,8 +545,7 @@ int vertexInsert(Graph* g, double x, double y, int id) {
 int dcreate(Graph* g) {
 	if (!g) return GRAPH_NULLPTR;
 	int m;
-	do {
-		
+	do {		
 		m = dialog(createmsgs, NCreate);
 		if (m == 1) dvertexInsert(g);
 		if (m == 2) dedgeInsert(g);
@@ -726,8 +671,8 @@ int save(Graph* g, char* fname) {
 	for (int i = 0; i < g->v; i++) {
 		AdjList* adjtmp = g->adjlist[i].next;
 		while (adjtmp) {
-			fwrite(&g->adjlist[i].vertex->point->id, sizeof(int), 1, fd); //fid
-			fwrite(&adjtmp->vertex->point->id, sizeof(int), 1, fd); //sid
+			fwrite(&g->adjlist[i].vertex->point->id, sizeof(int), 1, fd); 
+			fwrite(&adjtmp->vertex->point->id, sizeof(int), 1, fd); 
 			adjtmp = adjtmp->next;
 		}
 	}
@@ -797,7 +742,6 @@ int graphMemTest() {
 	}
 	return 0;
 }
-
 /*
 int main() {
 	Graph g = { NULL, 0, 0 };
@@ -806,7 +750,6 @@ int main() {
 	while (rc = dialog(loadmsgs, NLoadMsgs)) if (!lfptr[rc](&g)) break;
 	while (rc = dialog(menu, NMenu)) mfptr[rc](&g);
 	delGraph(&g);
-	//graphMemTest();
 	puts("Program finished");
 	return 0;
 }*/

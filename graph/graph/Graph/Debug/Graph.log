@@ -1,5 +1,5 @@
 ﻿  Graph.cpp
-c:\users\troja\documents\github\labs\graph\graph\graph\graph.cpp(373): warning C4244: аргумент: преобразование "time_t" в "unsigned int", возможна потеря данных
-c:\users\troja\documents\github\labs\graph\graph\graph\graph.cpp(413): warning C4244: аргумент: преобразование "time_t" в "unsigned int", возможна потеря данных
-c:\users\troja\documents\github\labs\graph\graph\graph\graph.cpp(804): warning C4101: d: неиспользованная локальная переменная
+c:\users\troja\documents\github\labs\graph\graph\graph\graph.cpp(311): warning C4244: аргумент: преобразование "time_t" в "unsigned int", возможна потеря данных
+c:\users\troja\documents\github\labs\graph\graph\graph\graph.cpp(351): warning C4244: аргумент: преобразование "time_t" в "unsigned int", возможна потеря данных
+c:\users\troja\documents\github\labs\graph\graph\graph\graph.cpp(732): warning C4101: d: неиспользованная локальная переменная
   Graph.vcxproj -> C:\Users\troja\Documents\GitHub\labs\graph\graph\Debug\Graph.exe

@@ -92,8 +92,33 @@ TEST(emptyStack, push) {
 	a->vertex = v;
 	push(&s, a);
 	ASSERT_TRUE(s->next->ind == a->vertex->ind);
+	ASSERT_TRUE(s->next->next == NULL);
 	free(a);
 	free(v);
+	free(s->next);
+	free(s);
+}
+
+TEST(nonEmptyStack, push) {
+	Stack* s = (Stack*)calloc(1, sizeof(Stack));
+	AdjList* a = (AdjList*)calloc(1, sizeof(AdjList));
+	AdjList* b = (AdjList*)calloc(1, sizeof(AdjList));
+	Vertex* v = (Vertex*)calloc(1, sizeof(Vertex));
+	Vertex* x = (Vertex*)calloc(1, sizeof(Vertex));
+	a->vertex = v;
+	b->vertex = x;
+	push(&s, a);
+	ASSERT_TRUE(s->next->ind == a->vertex->ind);
+	ASSERT_TRUE(s->next->next == NULL);
+	push(&s, b);
+	ASSERT_TRUE(s->next->ind == b->vertex->ind);
+	ASSERT_TRUE(s->next->next->ind == a->vertex->ind);
+	ASSERT_TRUE(s->next->next->next == NULL);
+	free(a);
+	free(b);
+	free(x);
+	free(v);
+	free(s->next->next);
 	free(s->next);
 	free(s);
 }
@@ -170,7 +195,7 @@ TEST(lonelyParent, insertChild) {
 	Vertex* p = (Vertex*)calloc(1, sizeof(Vertex));
 	Vertex* c = (Vertex*)calloc(1, sizeof(Vertex));
 	insertChild(p, c);
-	ASSERT_EQ(p->nChilds, 1);
+	ASSERT_EQ(p->nCh, 1);
 	ASSERT_TRUE(p->child);
 	ASSERT_TRUE(p->child[0] == c);
 	free(p);
@@ -189,7 +214,7 @@ TEST(normalParent, insertChild) {
 	insertChild(p, c3);
 	insertChild(p, c4);
 	insertChild(p, c5);
-	ASSERT_EQ(p->nChilds, 5);
+	ASSERT_EQ(p->nCh, 5);
 	ASSERT_TRUE(p->child);
 	ASSERT_TRUE(p->child[0] == c1);
 	ASSERT_TRUE(p->child[1] == c2);
@@ -235,7 +260,7 @@ TEST(normalParent, killChildren) {
 	for (int i = 0; i < 10; i++) vertexInsert(&g, i, i, i);
 	for (int i = 1; i < 10; i++) insertChild(g.adjlist[0].vertex, g.adjlist[i].vertex);
 	killChildren(&g);
-	ASSERT_EQ(g.adjlist[0].vertex->nChilds, 0);
+	ASSERT_EQ(g.adjlist[0].vertex->nCh, 0);
 	ASSERT_FALSE(g.adjlist[0].vertex->child);
 	delGraph(&g);
 }
@@ -456,6 +481,13 @@ TEST(graph1, AbsentFid1EdgeSearch) {
 	delGraph(&g);
 }
 
+TEST(graph1, AbsentFid3EdgeSearch) {
+	Graph g = { 0, 0, NULL };
+	char* fname = makeStr("file");
+	load(&g, fname);
+	ASSERT_TRUE(edgeSearch(&g, 9, 1) == NULL);
+	delGraph(&g);
+}
 
 TEST(graph1, AbsentFid2EdgeSearch) {
 	Graph g = { 0, 0, NULL };
