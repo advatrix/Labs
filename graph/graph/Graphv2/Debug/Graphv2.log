@@ -1,4 +1,0 @@
-﻿  Graphv2.cpp
-c:\users\troja\documents\github\labs\graph\graph\graphv2\graphv2.cpp(314): warning C4244: аргумент: преобразование "time_t" в "unsigned int", возможна потеря данных
-c:\users\troja\documents\github\labs\graph\graph\graphv2\graphv2.cpp(354): warning C4244: аргумент: преобразование "time_t" в "unsigned int", возможна потеря данных
-  Graphv2.vcxproj -> C:\Users\troja\Documents\GitHub\labs\graph\graph\Debug\Graphv2.exe

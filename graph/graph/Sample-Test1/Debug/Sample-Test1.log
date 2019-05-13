@@ -1,6 +1,0 @@
-﻿cl : командная строка warning D9035: использование параметра "Gm" нежелательно, он будет удален в следующих выпусках
-  test.cpp
-c:\users\troja\documents\github\labs\graph\graph\graph\graph.cpp(311): warning C4244: аргумент: преобразование "time_t" в "unsigned int", возможна потеря данных
-c:\users\troja\documents\github\labs\graph\graph\graph\graph.cpp(351): warning C4244: аргумент: преобразование "time_t" в "unsigned int", возможна потеря данных
-c:\users\troja\documents\github\labs\graph\graph\sample-test1\test.cpp(316): warning C4244: аргумент: преобразование "time_t" в "unsigned int", возможна потеря данных
-  Sample-Test1.vcxproj -> C:\Users\troja\Documents\GitHub\labs\graph\graph\Debug\Sample-Test1.exe
