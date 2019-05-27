@@ -1,4 +1,10 @@
-﻿#include "pch.h"
+/*
+два пространства ключей
+первое - просматриваемая таблица
+второе - упорядоченная
+*/
+
+#include "pch.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <malloc.h>
@@ -316,24 +322,7 @@ int main() {
 	char *s = (char*)malloc(5);
 	*s = '\0';
 	strcat(s, buf);
-//	while (rc = dialog(msgs, NMsgs)) if (!fptr[rc](&t)) break;
-/*	while (1) {
-		table t = { 0, ks1, ks2 };
-		for (int i = 0; i < 5; i++) {
-			char buf[] = "info";
-			char *s = (char*)malloc(5);
-			*s = '\0';
-			strcat(s, buf);
-			insert(&t, i + 1, i + 3, s);
-		}
-		delTable(&t);
-	}*/
-	while (1) {
-		int i = 1;
-		insert(&t, i, i + 1, s);
-		rmv(&t, 2, i + 1);
-		
-	}
+	while (rc = dialog(msgs, NMsgs)) if (!fptr[rc](&t)) break;
 	puts("Program finished");
 	delTable(&t);
 	return 0;
