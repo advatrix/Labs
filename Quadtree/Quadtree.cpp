@@ -1,4 +1,8 @@
-﻿#include "pch.h"
+/*
+Q-дерево с данными в листьях
+*/
+
+#include "pch.h"
 #include <stdio.h>
 #include <malloc.h>
 #include <stdlib.h>
