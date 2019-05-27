@@ -734,7 +734,7 @@ int graphMemTest() {
 	return 0;
 }
 
-/*
+
 int main() {
 	Graph g = { NULL, 0, 0 };
 	int rc;
@@ -743,4 +743,4 @@ int main() {
 	delGraph(&g);
 	puts("Program finished");
 	return 0;
-}*/
+}
