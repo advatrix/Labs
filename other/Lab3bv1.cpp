@@ -1,4 +1,8 @@
-﻿#include "pch.h"
+/*
+из исходной строки удалить слова в скобках
+*/
+
+#include "pch.h"
 #include <stdio.h>
 #include <malloc.h>
 #pragma warning(disable:4996)
@@ -59,57 +63,7 @@ item *deleteList(item *ptr) {
 	}
 	return ptr;
 }
-/*
-item *reorg(item *p) {
-	item head = { '\0', p },
-		*last = &head,
-		*prev = NULL,
-		*tmp = NULL;
-	int f = 0;
-	while (last && (last->next = delSpace(last->next))) {
-		while (last->next && (last->next->c == '(')) {
-			f++;
-			last->next->c = ' ';
-			tmp = last->next;
-			last->next = last->next->next;
-			free(tmp);
-		}
-		while (last->next && (last->next->c == ')')) {
-			f--;
-			last->next->c = ' ';
-			tmp = last->next;
-			last->next = last->next->next;
-			free(tmp);
-		}
-		if ((f > 0) && last->next) {
-			prev = skipWord(last->next);
-			last = prev->next;
-			if (last) {
-				if (last->c == ')') f--;
-			}
-		}
-		else last->next = delWord(last->next);
-	}
-	if (last && prev) {
-		prev->next = NULL;
-		free(last);
-	}
-	tmp = &head;
-	tmp = delSpace(tmp);
-	while (tmp) {
-		if ((tmp->c == ')') || (tmp->c == '(') || (tmp->c == '\t'))  tmp->c = ' ';
-		if ((tmp->next) && (tmp->c == ' ') && (tmp->next->c == ' ')) tmp = delSpace(tmp);
-		if (tmp) tmp = tmp->next;
-	}
-	while (head.next && head.next->c == ' ') {
-		tmp = head.next;
-		head.next = head.next->next;
-		free(tmp);
-	}
-	return head.next;
-}
 
-*/
 item *delSpace(item *p) {
 	item *tmp = NULL;
 	while (p && (p->c == ' ' || p->c == '\t')) {
@@ -119,22 +73,6 @@ item *delSpace(item *p) {
 	}
 	return p;
 }
-/*
-item *skipWord(item *p) {
-	if (p) while (p->next && p->next->c != ' ' && p->next->c != '\t' && p->next->c !=')' && p->next->c != '(') p = p->next;
-	return p;
-}
-
-item *delWord(item *p) {
-	item *tmp;
-	while (p && p->c != ' ' && p->c != '\t' && p->c != ')' && p->c != '(') {
-		tmp = p;
-		p = p->next;
-		free(tmp);
-	}
-	return p;
-}
-*/
 
 item *reorg(item *p) {
 	item head = { '\0', p },
