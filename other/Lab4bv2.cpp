@@ -1,4 +1,11 @@
-﻿#include "pch.h"
+/*
+два пространства ключей
+первое - просматриваемая таблица
+второе - упорядоченная
+*/
+
+
+#include "pch.h"
 #include <stdio.h>
 #include <malloc.h>
 #include <string.h>
