@@ -1,4 +1,11 @@
-﻿#include "pch.h"
+/*
+орграф, заданный списками смежности
+найти сильно связные компоненты
+*/
+
+
+
+#include "pch.h"
 #include <stdio.h>
 #include <malloc.h>
 #include <stdlib.h>
